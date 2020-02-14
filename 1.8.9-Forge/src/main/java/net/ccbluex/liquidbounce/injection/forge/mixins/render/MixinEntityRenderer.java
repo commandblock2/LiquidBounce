@@ -12,9 +12,12 @@ import net.ccbluex.liquidbounce.features.module.modules.player.Reach;
 import net.ccbluex.liquidbounce.features.module.modules.render.CameraClip;
 import net.ccbluex.liquidbounce.features.module.modules.render.NoHurtCam;
 import net.ccbluex.liquidbounce.features.module.modules.render.Tracers;
+import net.ccbluex.liquidbounce.utils.ClientUtils;
+import net.ccbluex.liquidbounce.utils.EntityUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -22,6 +25,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.entity.passive.EntityAnimal;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -34,6 +38,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+
+import static java.lang.Math.pow;
 
 @Mixin(EntityRenderer.class)
 @SideOnly(Side.CLIENT)
@@ -231,6 +237,47 @@ public abstract class MixinEntityRenderer {
                 this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
                 if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
                     this.mc.pointedEntity = this.pointedEntity;
+                }
+            }
+
+            if (reach.getState() && reach.getServerSideCheck().get()
+                    && mc.objectMouseOver != null && mc.pointedEntity != null)
+            {
+
+                int ping = EntityUtils.getPing(mc.thePlayer);
+
+                double serverCheckSq = pow(reach.getServerSideCheckDistance().get(),2);
+
+
+                EntityPlayerSP me = mc.thePlayer;
+                Vec3 theplayerPrediction = new Vec3(me.posX + me.motionX * 20 / 1000 * ping,
+                        0,//me.posY + me.motionY * 20 /1000 * ping,
+                        me.posZ + me.motionZ * 20 / 1000 * ping);
+
+                Entity target = pointedEntity;
+                Vec3 targetPrediction = new Vec3(target.posX + target.motionX * 20 / 1000 * ping,
+                        0,//target.posY + target.motionY * 20 /1000 * ping,
+                        target.posZ + target.motionZ * 20 / 1000 * ping);
+
+                double distsq = pow(theplayerPrediction.xCoord - targetPrediction.xCoord,2) +
+                        pow(theplayerPrediction.yCoord - targetPrediction.yCoord,2) +
+                        pow(theplayerPrediction.zCoord - targetPrediction.zCoord,2);
+
+                if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
+                {
+                    if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < distsq)
+                        ClientUtils.displayChatMessage("§5Client side valid attack §8" + pow(vec3.distanceTo(vec33), 2) + "§5 do not block §8" + distsq);
+                }
+                else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < distsq)
+                {
+                    mc.objectMouseOver = null;
+                    mc.pointedEntity = null;
+                    d1 = 0.0f;
+                    //ClientUtils.displayChatMessage("Disabling attack " + distsq);
+                }
+                else
+                {
+                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + pow(vec3.distanceTo(vec33), 2) + "§7 Server prediction: §c" + distsq);
                 }
             }
 
