@@ -250,25 +250,32 @@ public abstract class MixinEntityRenderer {
 
 
                 EntityPlayerSP me = mc.thePlayer;
-                Vec3 theplayerPrediction = new Vec3(me.posX + me.motionX * 20 / 1000 * ping,
-                        0,//me.posY + me.motionY * 20 /1000 * ping,
-                        me.posZ + me.motionZ * 20 / 1000 * ping);
+                /*Vec3 theplayerPrediction = new Vec3(me.posX + me.motionX * 20 / 1000 * ping,
+                        me.posY,//+ me.motionY * 20 /1000 * ping,
+                        me.posZ + me.motionZ * 20 / 1000 * ping);*/
 
                 Entity target = pointedEntity;
                 Vec3 targetPrediction = new Vec3(target.posX + target.motionX * 20 / 1000 * ping,
-                        0,//target.posY + target.motionY * 20 /1000 * ping,
+                        target.posY,// + target.motionY * 20 /1000 * ping,
                         target.posZ + target.motionZ * 20 / 1000 * ping);
 
-                double distsq = pow(theplayerPrediction.xCoord - targetPrediction.xCoord,2) +
-                        pow(theplayerPrediction.yCoord - targetPrediction.yCoord,2) +
-                        pow(theplayerPrediction.zCoord - targetPrediction.zCoord,2);
+                double predict_distsq = pow(me.posX - targetPrediction.xCoord,2) +
+                        pow(me.posY - targetPrediction.yCoord,2) +
+                        pow(me.posZ - targetPrediction.zCoord,2);
+
+                double client_distsq = pow(me.posX - target.posX, 2) +
+                    pow(me.posY - target.posY, 2) + pow(me.posZ - target.posZ , 2);
+
+                predict_distsq /= client_distsq;
+                predict_distsq *= vec3.distanceTo(vec33);
+                predict_distsq *= vec3.distanceTo(vec33);
 
                 if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
                 {
-                    if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < distsq)
-                        ClientUtils.displayChatMessage("§5Client side valid attack §8" + pow(vec3.distanceTo(vec33), 2) + "§5 do not block §8" + distsq);
+                    if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_distsq)
+                        ClientUtils.displayChatMessage("§5Client side valid attack §8" + pow(vec3.distanceTo(vec33), 2) + "§5 do not block §8" + predict_distsq);
                 }
-                else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < distsq)
+                else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_distsq)
                 {
                     mc.objectMouseOver = null;
                     mc.pointedEntity = null;
@@ -277,7 +284,7 @@ public abstract class MixinEntityRenderer {
                 }
                 else
                 {
-                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + pow(vec3.distanceTo(vec33), 2) + "§7 Server prediction: §c" + distsq);
+                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + pow(vec3.distanceTo(vec33), 2) + "§7 Server prediction: §c" + predict_distsq);
                 }
             }
 
