@@ -14,6 +14,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.NoHurtCam;
 import net.ccbluex.liquidbounce.features.module.modules.render.Tracers;
 import net.ccbluex.liquidbounce.utils.ClientUtils;
 import net.ccbluex.liquidbounce.utils.EntityUtils;
+import net.ccbluex.liquidbounce.utils.render.RenderUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -40,6 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
 @Mixin(EntityRenderer.class)
 @SideOnly(Side.CLIENT)
@@ -266,16 +268,16 @@ public abstract class MixinEntityRenderer {
                 double client_distsq = pow(me.posX - target.posX, 2) +
                     pow(me.posY - target.posY, 2) + pow(me.posZ - target.posZ , 2);
 
-                predict_distsq /= client_distsq;
-                predict_distsq *= vec3.distanceTo(vec33);
-                predict_distsq *= vec3.distanceTo(vec33);
+                double client_reach = vec3.distanceTo(vec33);
+                double predict_reach = client_reach / sqrt(client_distsq) * sqrt(predict_distsq);
+
 
                 if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
                 {
-                    if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_distsq)
+                    if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_reach)
                         ClientUtils.displayChatMessage("§5Client side valid attack §8" + pow(vec3.distanceTo(vec33), 2) + "§5 do not block §8" + predict_distsq);
                 }
-                else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_distsq)
+                else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < predict_reach)
                 {
                     mc.objectMouseOver = null;
                     mc.pointedEntity = null;
