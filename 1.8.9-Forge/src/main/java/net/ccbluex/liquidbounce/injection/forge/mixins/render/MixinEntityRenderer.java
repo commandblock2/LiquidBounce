@@ -275,18 +275,20 @@ public abstract class MixinEntityRenderer {
                 if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
                 {
                     if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
-                        ClientUtils.displayChatMessage("§5Client side valid attack §8" + pow(vec3.distanceTo(vec33), 2) + "§5 do not block §8" + pow(predict_reach,2.0));
+                        ClientUtils.displayChatMessage("§5Client side valid reach §8" + vec3.distanceTo(vec33) + "§5 won't block §8" + predict_reach);
                 }
                 else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
                 {
                     mc.objectMouseOver = null;
                     mc.pointedEntity = null;
                     d1 = 0.0f;
+                    d2 = 0.0f;
+                    // I have no idea what i am doing
                     //ClientUtils.displayChatMessage("Disabling attack " + distsq);
                 }
                 else
                 {
-                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + pow(vec3.distanceTo(vec33), 2) + "§7 Server prediction: §c" + pow(predict_reach,2.0));
+                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
                 }
             }
 
