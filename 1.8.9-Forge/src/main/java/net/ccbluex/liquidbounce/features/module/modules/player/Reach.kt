@@ -15,6 +15,7 @@ import net.ccbluex.liquidbounce.utils.EntityUtils
 import net.ccbluex.liquidbounce.utils.timer.MSTimer
 import net.ccbluex.liquidbounce.value.BoolValue
 import net.ccbluex.liquidbounce.value.FloatValue
+import net.ccbluex.liquidbounce.value.IntegerValue
 import kotlin.math.abs
 
 @ModuleInfo(name = "Reach", description = "Increases your reach.", category = ModuleCategory.PLAYER)
@@ -25,6 +26,7 @@ class Reach : Module() {
     val serverSideCheck = BoolValue("serverSideCheck",true)
     val doNotShorten = BoolValue("doNotShorten",true)
     val serverSideCheckDistance = FloatValue("serverSideCheckDistance",3.0f,2.0f,7f)
+    val manuallySpecifiedPing = IntegerValue("manuallySpecifiedPing",0,0,2000)
 
     private var ping_history = mutableListOf<Int>()
     val length = 10

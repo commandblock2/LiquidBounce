@@ -248,6 +248,8 @@ public abstract class MixinEntityRenderer {
 
                 int ping = EntityUtils.getPing(mc.thePlayer);
 
+                if (reach.getManuallySpecifiedPing().get() != 0) ping = reach.getManuallySpecifiedPing().get();
+
                 double serverCheckSq = pow(reach.getServerSideCheckDistance().get(),2);
 
 
