@@ -230,18 +230,6 @@ public abstract class MixinEntityRenderer {
                 }
             }
 
-            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.getCombatReachValue().get() : 3.0D)) {
-                this.pointedEntity = null;
-                this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
-            }
-
-            if(this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
-                this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
-                if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
-                    this.mc.pointedEntity = this.pointedEntity;
-                }
-            }
-
             if (reach.getState() && reach.getServerSideCheck().get()
                     && mc.objectMouseOver != null && mc.pointedEntity != null)
             {
@@ -268,7 +256,7 @@ public abstract class MixinEntityRenderer {
                         pow(me.posZ - targetPrediction.zCoord,2);
 
                 double client_distsq = pow(me.posX - target.posX, 2) +
-                    pow(me.posY - target.posY, 2) + pow(me.posZ - target.posZ , 2);
+                        pow(me.posY - target.posY, 2) + pow(me.posZ - target.posZ , 2);
 
                 double client_reach = vec3.distanceTo(vec33);
                 double predict_reach = client_reach / sqrt(client_distsq) * sqrt(predict_distsq);
@@ -291,6 +279,18 @@ public abstract class MixinEntityRenderer {
                 else
                 {
                     ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
+                }
+            }
+
+            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.getCombatReachValue().get() : 3.0D)) {
+                this.pointedEntity = null;
+                this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
+            }
+
+            if(this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
+                this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
+                if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
+                    this.mc.pointedEntity = this.pointedEntity;
                 }
             }
 
