@@ -265,7 +265,8 @@ public abstract class MixinEntityRenderer {
                 if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
                 {
                     if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
-                        ClientUtils.displayChatMessage("§5Client side valid reach §8" + vec3.distanceTo(vec33) + "§5 won't block §8" + predict_reach);
+                        if (reach.getDebugging().get())
+                            ClientUtils.displayChatMessage("§5Client side valid reach §8" + vec3.distanceTo(vec33) + "§5 won't block §8" + predict_reach);
                 }
                 else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
                 {
@@ -274,7 +275,8 @@ public abstract class MixinEntityRenderer {
                 }
                 else
                 {
-                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
+                    if (reach.getDebugging().get())
+                        ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
                 }
             }
 
