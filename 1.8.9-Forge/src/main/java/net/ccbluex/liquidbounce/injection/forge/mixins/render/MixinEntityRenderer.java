@@ -230,6 +230,18 @@ public abstract class MixinEntityRenderer {
                 }
             }
 
+            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.getCombatReachValue().get() : 3.0D)) {
+                this.pointedEntity = null;
+                this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
+            }
+
+            if(this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
+                this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
+                if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
+                    this.mc.pointedEntity = this.pointedEntity;
+                }
+            }
+
             if (reach.getState() && reach.getServerSideCheck().get()
                     && mc.objectMouseOver != null && mc.pointedEntity != null)
             {
@@ -265,32 +277,19 @@ public abstract class MixinEntityRenderer {
                 if (vec3.distanceTo(vec33) <= 3.0f && reach.getDoNotShorten().get())
                 {
                     if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
-                        ClientUtils.displayChatMessage("§5Client side valid reach §8" + vec3.distanceTo(vec33) + "§5 won't block §8" + predict_reach);
+                        if (reach.getDebugging().get())
+                            ClientUtils.displayChatMessage("§5Client side valid reach §8" + vec3.distanceTo(vec33) + "§5 won't block §8" + predict_reach);
                 }
                 else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
                 {
-                    mc.objectMouseOver = null;
-                    mc.pointedEntity = null;
-                    d1 = 0.0f;
-                    d2 = 0.0f;
-                    // I have no idea what i am doing
+                    this.pointedEntity = null;
+                    this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
                     //ClientUtils.displayChatMessage("Disabling attack " + distsq);
                 }
                 else
                 {
-                    ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
-                }
-            }
-
-            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.getCombatReachValue().get() : 3.0D)) {
-                this.pointedEntity = null;
-                this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
-            }
-
-            if(this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
-                this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
-                if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
-                    this.mc.pointedEntity = this.pointedEntity;
+                    if (reach.getDebugging().get())
+                        ClientUtils.displayChatMessage("§7Allow attack Client reach = §c" + vec3.distanceTo(vec33) + "§7 Server prediction: §c" + predict_reach);
                 }
             }
 
