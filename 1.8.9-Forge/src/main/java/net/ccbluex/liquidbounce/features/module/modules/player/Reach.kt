@@ -27,7 +27,6 @@ class Reach : Module() {
     val doNotShorten = BoolValue("doNotShorten",true)
     val serverSideCheckDistance = FloatValue("serverSideCheckDistance",3.0f,2.0f,7f)
     val manuallySpecifiedPing = IntegerValue("manuallySpecifiedPing",0,0,2000)
-    val debugging = BoolValue("debugging", true)
 
     private var ping_history = mutableListOf<Int>()
     val length = 10
@@ -44,12 +43,12 @@ class Reach : Module() {
 
     override fun onEnable()
     {
-
+        mc.thePlayer.sendChatMessage("Reach on with try serverside check = ${serverSideCheck.get()}(only for debugging)")
     }
 
     override fun onDisable()
     {
-
+        mc.thePlayer.sendChatMessage("Reach off (only for debugging)")
     }
 
     @EventTarget
