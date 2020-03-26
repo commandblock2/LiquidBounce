@@ -269,12 +269,8 @@ public abstract class MixinEntityRenderer {
                 }
                 else if (Math.max(3.0f * 3.0f,serverCheckSq * reach.getBelief()) < pow(predict_reach,2.0))
                 {
-                    mc.objectMouseOver = null;
                     mc.pointedEntity = null;
-                    d1 = 0.0f;
-                    d2 = 0.0f;
-                    // I have no idea what i am doing
-                    //ClientUtils.displayChatMessage("Disabling attack " + distsq);
+                    this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
                 }
                 else
                 {
