@@ -24,6 +24,15 @@ fun Entity.getDistanceToEntityBox(entity: Entity): Double {
     return sqrt(xDist.pow(2) + yDist.pow(2) + zDist.pow(2))
 }
 
+fun Entity.getDistanceToAABB(axisAlignedBB: AxisAlignedBB): Double {
+    val eyes = this.getPositionEyes(0f)
+    val pos = getNearestPointBB(eyes, axisAlignedBB)
+    val xDist = abs(pos.xCoord - eyes.xCoord)
+    val yDist = abs(pos.yCoord - eyes.yCoord)
+    val zDist = abs(pos.zCoord - eyes.zCoord)
+    return sqrt(xDist.pow(2) + yDist.pow(2) + zDist.pow(2))
+}
+
 
 fun getNearestPointBB(eye: Vec3, box: AxisAlignedBB): Vec3 {
     val origin = doubleArrayOf(eye.xCoord, eye.yCoord, eye.zCoord)

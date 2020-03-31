@@ -17,6 +17,7 @@ import net.ccbluex.liquidbounce.features.module.modules.render.FreeCam
 import net.ccbluex.liquidbounce.utils.EntityUtils
 import net.ccbluex.liquidbounce.utils.RaycastUtils
 import net.ccbluex.liquidbounce.utils.RotationUtils
+import net.ccbluex.liquidbounce.utils.extensions.getDistanceToAABB
 import net.ccbluex.liquidbounce.utils.extensions.getDistanceToEntityBox
 import net.ccbluex.liquidbounce.utils.misc.RandomUtils
 import net.ccbluex.liquidbounce.utils.render.RenderUtils
@@ -42,9 +43,11 @@ import net.minecraft.util.MathHelper
 import net.minecraft.world.WorldSettings
 import org.lwjgl.input.Keyboard
 import java.awt.Color
+import java.lang.Math.pow
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 @ModuleInfo(name = "KillAura", description = "Automatically attacks targets around you.",
         category = ModuleCategory.COMBAT, keyBind = Keyboard.KEY_R)
@@ -125,6 +128,8 @@ class KillAura : Module() {
 
     // Predict
     private val predictValue = BoolValue("Predict", true)
+    private val predictAlsoAffectRange = BoolValue("PredictAlsoAffectRange",true)
+    private val predictDoesNotShorten = BoolValue("PredictionDoesNotShorten",false)
 
     private val maxPredictSize: FloatValue = object : FloatValue("MaxPredictSize", 1f, 0.1f, 5f) {
         override fun onChanged(oldValue: Float, newValue: Float) {
@@ -430,7 +435,8 @@ class KillAura : Module() {
             val distance = mc.thePlayer.getDistanceToEntityBox(entity)
             val entityFov = RotationUtils.getRotationDifference(entity)
 
-            if (distance <= maxRange && (fov == 180F || entityFov <= fov) && entity.hurtTime <= hurtTime)
+            if (distance <= (maxRange + if(predictAlsoAffectRange.get()) 4.0 else 0.0) && (fov == 180F || entityFov <= fov) && entity.hurtTime <= hurtTime)
+                //                     ^^^^ more targets, later filter the invalid ones in updateRotation
                 targets.add(entity)
         }
 
@@ -572,6 +578,23 @@ class KillAura : Module() {
                 predictValue.get(),
                 mc.thePlayer.getDistanceToEntityBox(entity) < throughWallsRangeValue.get()
         ) ?: return false
+
+        if(predictAlsoAffectRange.get())
+        {
+            val nonePredictRange = mc.thePlayer.getDistanceToEntityBox(entity)
+            val range = mc.thePlayer.getDistanceToAABB(boundingBox)
+
+            if (predictDoesNotShorten.get() && nonePredictRange < maxRange)
+            {
+                //valid
+            }
+            else if (range < maxRange)
+            {
+                //valid
+            }
+            else
+                return false
+        }
 
         val limitedRotation = RotationUtils.limitAngleChange(RotationUtils.serverRotation, rotation,
                 (Math.random() * (maxTurnSpeed.get() - minTurnSpeed.get()) + minTurnSpeed.get()).toFloat())
