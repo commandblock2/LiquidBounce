@@ -185,7 +185,7 @@ public abstract class MixinEntityRenderer {
             }
 
             if(reach.getState()) {
-                d1 = reach.getCombatReachValue().get();
+                d1 = reach.calcReach();
 
                 final MovingObjectPosition movingObjectPosition = entity.rayTrace(d1, p_getMouseOver_1_);
 

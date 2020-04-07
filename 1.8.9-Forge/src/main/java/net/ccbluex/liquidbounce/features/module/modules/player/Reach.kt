@@ -30,7 +30,7 @@ class Reach : Module() {
     val serverSideCheckDistance = FloatValue("serverSideCheckDistance",3.0f,2.0f,7f)
     val manuallySpecifiedPing = IntegerValue("manuallySpecifiedPing",0,0,2000)
     val firstHitExtraRange = FloatValue("FirstHitExtraRange",0.2f,0.0f,4.0f)
-    val firstHitTickTimer = IntegerValue("FirstHitTickTimer",15,0,15)
+    val firstHitTickTimer = IntegerValue("FirstHitTickTimer",200,200,2000)
     val debugging = BoolValue("debugging", true)
 
     private var ping_history = mutableListOf<Int>()
@@ -60,6 +60,9 @@ class Reach : Module() {
 
     fun calcReach(): Float
     {
+        if (debugging.get())
+            ClientUtils.displayChatMessage("${combatReachValue.get() + if (tickCounter < 0) firstHitExtraRange.get() else 0f}")
+
         return combatReachValue.get() + if (tickCounter < 0) firstHitExtraRange.get() else 0f
     }
 
