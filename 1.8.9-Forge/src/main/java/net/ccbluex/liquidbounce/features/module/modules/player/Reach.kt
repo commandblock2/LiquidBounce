@@ -5,8 +5,10 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.player
 
+import net.ccbluex.liquidbounce.event.AttackEvent
 import net.ccbluex.liquidbounce.event.EventTarget
 import net.ccbluex.liquidbounce.event.Render3DEvent
+import net.ccbluex.liquidbounce.event.TickEvent
 import net.ccbluex.liquidbounce.features.module.Module
 import net.ccbluex.liquidbounce.features.module.ModuleCategory
 import net.ccbluex.liquidbounce.features.module.ModuleInfo
@@ -27,11 +29,15 @@ class Reach : Module() {
     val doNotShorten = BoolValue("doNotShorten",true)
     val serverSideCheckDistance = FloatValue("serverSideCheckDistance",3.0f,2.0f,7f)
     val manuallySpecifiedPing = IntegerValue("manuallySpecifiedPing",0,0,2000)
+    val firstHitExtraRange = FloatValue("FirstHitExtraRange",0.2f,0.0f,4.0f)
+    val firstHitTickTimer = IntegerValue("FirstHitTickTimer",15,0,15)
     val debugging = BoolValue("debugging", true)
 
     private var ping_history = mutableListOf<Int>()
     val length = 10
     var belief: Float = .0f
+
+    var tickCounter = 0
 
 
     val maxRange: Float
@@ -44,12 +50,29 @@ class Reach : Module() {
 
     override fun onEnable()
     {
-
+        if (firstHitExtraRange.get()!=0.0f) tickCounter = firstHitTickTimer.get()
     }
 
     override fun onDisable()
     {
 
+    }
+
+    fun calcReach(): Float
+    {
+        return combatReachValue.get() + if (tickCounter < 0) firstHitExtraRange.get() else 0f
+    }
+
+    @EventTarget
+    fun onTick(event: TickEvent)
+    {
+        tickCounter--
+    }
+
+    @EventTarget
+    fun onAttack(event: AttackEvent)
+    {
+        tickCounter = firstHitTickTimer.get()
     }
 
     @EventTarget

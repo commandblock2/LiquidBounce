@@ -14,7 +14,6 @@ import net.ccbluex.liquidbounce.features.module.modules.render.NoHurtCam;
 import net.ccbluex.liquidbounce.features.module.modules.render.Tracers;
 import net.ccbluex.liquidbounce.utils.ClientUtils;
 import net.ccbluex.liquidbounce.utils.EntityUtils;
-import net.ccbluex.liquidbounce.utils.render.RenderUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -26,7 +25,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.entity.passive.EntityAnimal;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -170,7 +168,7 @@ public abstract class MixinEntityRenderer {
 
             final Reach reach = (Reach) LiquidBounce.moduleManager.getModule(Reach.class);
 
-            double d0 = reach.getState() ? reach.getMaxRange() : (double) this.mc.playerController.getBlockReachDistance();
+            double d0 = reach.getState() ? reach.calcReach() : (double) this.mc.playerController.getBlockReachDistance();
             this.mc.objectMouseOver = entity.rayTrace(reach.getState() ? reach.getBuildReachValue().get() : d0, p_getMouseOver_1_);
             double d1 = d0;
             Vec3 vec3 = entity.getPositionEyes(p_getMouseOver_1_);
@@ -280,7 +278,7 @@ public abstract class MixinEntityRenderer {
                 }
             }
 
-            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.getCombatReachValue().get() : 3.0D)) {
+            if (this.pointedEntity != null && flag && vec3.distanceTo(vec33) > (reach.getState() ? reach.calcReach() : 3.0D)) {
                 this.pointedEntity = null;
                 this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
             }
