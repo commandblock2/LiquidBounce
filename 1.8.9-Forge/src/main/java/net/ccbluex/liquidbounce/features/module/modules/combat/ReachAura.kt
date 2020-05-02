@@ -318,7 +318,10 @@ class ReachAura : Module()
                 targetList.removeAt(0)
 
             schedule()
-            scheduled = true
+            if(reachAuraQueue.size != 0)
+                scheduled = true
+            else
+                return
         }
 
         packets += (pPS.get() / 20.0)
