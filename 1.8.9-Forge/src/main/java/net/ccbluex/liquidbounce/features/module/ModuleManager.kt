@@ -231,7 +231,7 @@ class ModuleManager : Listenable {
     /**
      * Generate command for [module]
      */
-    private fun generateCommand(module: Module) {
+    internal fun generateCommand(module: Module) {
         val values = module.values
 
         if (values.isEmpty())
