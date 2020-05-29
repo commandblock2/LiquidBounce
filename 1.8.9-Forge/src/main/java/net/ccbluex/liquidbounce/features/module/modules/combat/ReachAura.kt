@@ -67,7 +67,7 @@ class ReachAura : Module()
 
     private val rangeValue = FloatValue("Range", 20f, 1f, 100f)
     private val tpDistanceValue = FloatValue("TpDistance", 4.0f, 0.5f, 10.0f)
-    private val stopAtDistance = FloatValue("StopAtDistance", 0.0f, 0.0f, 6.0f)
+    private val stopAtDistance = FloatValue("StopAtDistance", 2.0f, 2.0f, 6.0f)
 
     private val pathFindingMode = ListValue("PathFindingMode", arrayOf("Simple",
             "NaiveAstarGround", "NaiveAstarFly"), "NaiveAstarFly")
