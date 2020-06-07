@@ -38,7 +38,7 @@ object LiquidBounce {
 
     // Client information
     const val CLIENT_NAME = "LiquidBounce"
-    const val CLIENT_VERSION = 72
+    const val CLIENT_VERSION = 73
     const val IN_DEV = true
     const val CLIENT_CREATOR = "CCBlueX"
     const val MINECRAFT_VERSION = "1.8.9"
@@ -96,7 +96,7 @@ object LiquidBounce {
 
         // Setup module manager and register modules
         moduleManager = ModuleManager()
-        LiquidBounce.moduleManager.registerModules()
+        moduleManager.registerModules()
 
         // Remapper
         try {
