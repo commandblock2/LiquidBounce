@@ -52,7 +52,6 @@ class Notifications(x: Double = 0.0, y: Double = 30.0, scale: Float = 1F,
 }
 
 class Notification(private val message: String) {
-
     var x = 0F
     var textLength = 0
 
@@ -88,12 +87,14 @@ class Notification(private val message: String) {
                 if (x < width) {
                     x = AnimationUtils.easeOut(fadeStep, width) * width
                     fadeStep += delta / 4F
-                } else fadeState = FadeState.STAY
+                }
+                if (x >= width) {
+                    fadeState = FadeState.STAY
+                    x = width
+                    fadeStep = width
+                }
 
                 stay = 60F
-
-                if (x > width)
-                    x = width
             }
 
             FadeState.STAY -> if (stay > 0)
