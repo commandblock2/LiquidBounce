@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.script
 
 import jdk.internal.dynalink.beans.StaticClass
 import jdk.nashorn.api.scripting.JSObject
+import jdk.nashorn.api.scripting.NashornScriptEngineFactory
 import jdk.nashorn.api.scripting.ScriptUtils
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.features.command.Command
@@ -18,12 +19,14 @@ import net.ccbluex.liquidbounce.script.api.global.Setting
 import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.MinecraftInstance
 import java.io.File
+import java.util.*
 import java.util.function.Function
-import javax.script.ScriptEngineManager
+import javax.script.ScriptEngine
+import kotlin.collections.HashMap
 
 class Script(val scriptFile: File) : MinecraftInstance() {
 
-    private var scriptEngine = ScriptEngineManager().getEngineByName("nashorn")
+    private val scriptEngine: ScriptEngine
     private val scriptText = scriptFile.readText()
 
     // Script information
@@ -37,6 +40,9 @@ class Script(val scriptFile: File) : MinecraftInstance() {
     private val registeredCommands = mutableListOf<Command>()
 
     init {
+        val engineFlags = getMagicComment("engine_flags")?.split(",")?.toTypedArray() ?: emptyArray()
+        scriptEngine = NashornScriptEngineFactory().getScriptEngine(*engineFlags)
+
         // Global classes
         scriptEngine.put("Chat", StaticClass.forClass(Chat::class.java))
         scriptEngine.put("Setting", StaticClass.forClass(Setting::class.java))
@@ -112,8 +118,31 @@ class Script(val scriptFile: File) : MinecraftInstance() {
         ScriptTab(tabObject)
     }
 
-    fun supportLegacyScripts() {
-        if (!scriptText.lines().first().contains("api_version=2")) {
+    /**
+     * Gets the value of a magic comment from the script. Used for specifying additional information about the script.
+     * @param name Name of the comment.
+     * @return Value of the comment.
+     */
+    private fun getMagicComment(name: String): String? {
+        val magicPrefix = "///"
+
+        scriptText.lines().forEach {
+            if (!it.startsWith(magicPrefix)) return null
+
+            val commentData = it.substring(magicPrefix.length).split("=", limit = 2)
+            if (commentData.first().trim() == name) {
+                return commentData.last().trim()
+            }
+        }
+
+        return null
+    }
+
+    /**
+     * Adds support for scripts made for LiquidBounce's original script API.
+     */
+    private fun supportLegacyScripts() {
+        if (getMagicComment("api_version") != "2") {
             ClientUtils.getLogger().info("[ScriptAPI] Running script '${scriptFile.name}' with legacy support.")
             val legacyScript = LiquidBounce::class.java.getResource("/assets/minecraft/liquidbounce/scriptapi/legacy.js").readText()
             scriptEngine.eval(legacyScript)
@@ -154,7 +183,7 @@ class Script(val scriptFile: File) : MinecraftInstance() {
     }
 
     /**
-     * Imports another JavaScript file inro the context of this script.
+     * Imports another JavaScript file into the context of this script.
      * @param scriptFile Path to the file to be imported.
      */
     fun import(scriptFile: String) {
