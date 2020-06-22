@@ -21,6 +21,7 @@ import net.ccbluex.liquidbounce.value.BoolValue;
 import net.ccbluex.liquidbounce.value.FloatValue;
 import net.ccbluex.liquidbounce.value.IntegerValue;
 import net.ccbluex.liquidbounce.value.ListValue;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
@@ -122,8 +123,8 @@ public class Tower extends Module {
             placeInfo = null;
             timer.update();
 
-            if (autoBlockValue.get() ? InventoryUtils.findAutoBlockBlock() != -1 : mc.thePlayer.getHeldItem() != null
-                    && mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock) {
+            final boolean isHeldItemBlock = mc.thePlayer.getHeldItem() != null && mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock;
+            if (autoBlockValue.get() ? InventoryUtils.findAutoBlockBlock() != -1 || isHeldItemBlock : isHeldItemBlock) {
                 if (!stopWhenBlockAbove.get() || BlockUtils.getBlock(new BlockPos(mc.thePlayer.posX,
                         mc.thePlayer.posY + 2, mc.thePlayer.posZ)) instanceof BlockAir)
                     move();
@@ -148,7 +149,7 @@ public class Tower extends Module {
         mc.thePlayer.isAirBorne = true;
         mc.thePlayer.triggerAchievement(StatList.jumpStat);
     }
-    
+
     /**
      * Move player
      */
@@ -245,12 +246,12 @@ public class Tower extends Module {
         ItemStack itemStack = mc.thePlayer.getHeldItem();
 
         if(mc.thePlayer.getHeldItem() == null || !(mc.thePlayer.getHeldItem().getItem() instanceof ItemBlock)) {
-            if(!autoBlockValue.get())
+            if (!autoBlockValue.get())
                 return;
 
             blockSlot = InventoryUtils.findAutoBlockBlock();
 
-            if(blockSlot == -1)
+            if (blockSlot == -1)
                 return;
 
             mc.getNetHandler().addToSendQueue(new C09PacketHeldItemChange(blockSlot - 36));
@@ -258,13 +259,13 @@ public class Tower extends Module {
         }
 
         // Place block
-        if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, itemStack, this.placeInfo.getBlockPos(),
-                placeInfo.getEnumFacing(), placeInfo.getVec3())) {
-            if(swingValue.get())
+        if (mc.playerController.onPlayerRightClick(mc.thePlayer, mc.theWorld, itemStack, this.placeInfo.getBlockPos(), placeInfo.getEnumFacing(), placeInfo.getVec3())) {
+            if (swingValue.get())
                 mc.thePlayer.swingItem();
             else
                 mc.getNetHandler().addToSendQueue(new C0APacketAnimation());
         }
+
         this.placeInfo = null;
 
         // Switch back to old slot when using auto block
@@ -378,9 +379,14 @@ public class Tower extends Module {
 
             final String info = "Blocks: §7" + getBlocksAmount();
             final ScaledResolution scaledResolution = new ScaledResolution(mc);
-            RenderUtils.drawBorderedRect((scaledResolution.getScaledWidth() / 2) - 2, (scaledResolution.getScaledHeight() / 2) + 5, (scaledResolution.getScaledWidth() / 2) + Fonts.font40.getStringWidth(info) + 2, (scaledResolution.getScaledHeight() / 2) + 16, 3, Color.BLACK.getRGB(), Color.BLACK.getRGB());
+
+            RenderUtils.drawBorderedRect((scaledResolution.getScaledWidth() / 2) - 2,
+                    (scaledResolution.getScaledHeight() / 2) + 5,
+                    (scaledResolution.getScaledWidth() / 2) + Fonts.font40.getStringWidth(info) + 2,
+                    (scaledResolution.getScaledHeight() / 2) + 16, 3, Color.BLACK.getRGB(), Color.BLACK.getRGB());
             GlStateManager.resetColor();
-            Fonts.font40.drawString(info, scaledResolution.getScaledWidth() / 2, scaledResolution.getScaledHeight() / 2 + 7, Color.WHITE.getRGB());
+            Fonts.font40.drawString(info, scaledResolution.getScaledWidth() / 2,
+                    scaledResolution.getScaledHeight() / 2 + 7, Color.WHITE.getRGB());
 
             GlStateManager.popMatrix();
         }
@@ -401,8 +407,11 @@ public class Tower extends Module {
         for(int i = 36; i < 45; i++) {
             final ItemStack itemStack = mc.thePlayer.inventoryContainer.getSlot(i).getStack();
 
-            if(itemStack != null && itemStack.getItem() instanceof ItemBlock)
-                amount += itemStack.stackSize;
+            if (itemStack != null && itemStack.getItem() instanceof ItemBlock) {
+                final Block block = ((ItemBlock) itemStack.getItem()).getBlock();
+                if (mc.thePlayer.getHeldItem() == itemStack || !InventoryUtils.BLOCK_BLACKLIST.contains(block))
+                    amount += itemStack.stackSize;
+            }
         }
 
         return amount;

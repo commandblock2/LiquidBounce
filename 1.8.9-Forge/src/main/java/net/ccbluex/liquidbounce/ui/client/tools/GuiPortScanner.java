@@ -35,7 +35,7 @@ public class GuiPortScanner extends GuiScreen {
 
     private boolean running;
 
-    private String status = "§7Wating...";
+    private String status = "§7Waiting...";
 
     private String host;
 
@@ -207,7 +207,7 @@ public class GuiPortScanner extends GuiScreen {
                         fileWriter.write(integer + "\r\n");
                     fileWriter.flush();
                     fileWriter.close();
-                    JOptionPane.showMessageDialog(null, "Exported successful!", "Port Scanner", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Exported successfully!", "Port Scanner", JOptionPane.INFORMATION_MESSAGE);
                 } catch (final Exception e) {
                     e.printStackTrace();
                     MiscUtils.showErrorPopup("Error", "Exception class: " + e.getClass().getName() + "\nMessage: " + e.getMessage());

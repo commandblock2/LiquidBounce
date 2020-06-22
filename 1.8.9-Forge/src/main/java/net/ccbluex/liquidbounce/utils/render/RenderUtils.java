@@ -336,6 +336,21 @@ public final class RenderUtils extends MinecraftInstance {
         glDisable(GL_LINE_SMOOTH);
     }
 
+    /**
+     * Like {@link #drawRect(float, float, float, float, int)}, but without setup
+     */
+    public static void quickDrawRect(final float x, final float y, final float x2, final float y2, final int color) {
+        glColor(color);
+        glBegin(GL_QUADS);
+
+        glVertex2d(x2, y);
+        glVertex2d(x, y);
+        glVertex2d(x, y2);
+        glVertex2d(x2, y2);
+
+        glEnd();
+    }
+
     public static void drawRect(final float x, final float y, final float x2, final float y2, final Color color) {
         drawRect(x, y, x2, y2, color.getRGB());
     }
@@ -343,6 +358,10 @@ public final class RenderUtils extends MinecraftInstance {
     public static void drawBorderedRect(final float x, final float y, final float x2, final float y2, final float width,
                                         final int color1, final int color2) {
         drawRect(x, y, x2, y2, color2);
+        drawBorder(x, y, x2, y2, width, color1);
+    }
+
+    public static void drawBorder(float x, float y, float x2, float y2, float width, int color1) {
         glEnable(GL_BLEND);
         glDisable(GL_TEXTURE_2D);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -350,20 +369,35 @@ public final class RenderUtils extends MinecraftInstance {
 
         glColor(color1);
         glLineWidth(width);
-        glBegin(1);
+
+        glBegin(GL_LINE_LOOP);
+
+        glVertex2d(x2, y);
         glVertex2d(x, y);
         glVertex2d(x, y2);
         glVertex2d(x2, y2);
-        glVertex2d(x2, y);
-        glVertex2d(x, y);
-        glVertex2d(x2, y);
-        glVertex2d(x, y2);
-        glVertex2d(x2, y2);
+
         glEnd();
 
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
         glDisable(GL_LINE_SMOOTH);
+    }
+
+    public static void quickDrawBorderedRect(final float x, final float y, final float x2, final float y2, final float width, final int color1, final int color2) {
+        quickDrawRect(x, y, x2, y2, color2);
+
+        glColor(color1);
+        glLineWidth(width);
+
+        glBegin(GL_LINE_LOOP);
+
+        glVertex2d(x2, y);
+        glVertex2d(x, y);
+        glVertex2d(x, y2);
+        glVertex2d(x2, y2);
+
+        glEnd();
     }
 
     public static void drawLoadingCircle(float x, float y) {
@@ -382,8 +416,9 @@ public final class RenderUtils extends MinecraftInstance {
         glEnable(GL_LINE_SMOOTH);
         glLineWidth(2F);
         glBegin(GL_LINE_STRIP);
-        for (float i = end; i >= start; i -= (360 / 90.0f))
+        for (float i = end; i >= start; i -= (360 / 90.0f)) {
             glVertex2f((float) (x + (cos(i * PI / 180) * (radius * 1.001F))), (float) (y + (sin(i * PI / 180) * (radius * 1.001F))));
+        }
         glEnd();
         glDisable(GL_LINE_SMOOTH);
 

@@ -8,6 +8,7 @@ package net.ccbluex.liquidbounce.ui.client.hud
 import net.ccbluex.liquidbounce.ui.client.hud.designer.GuiHudDesigner
 import net.ccbluex.liquidbounce.ui.client.hud.element.Element
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.*
+import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Target
 import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.MinecraftInstance
 import net.minecraft.client.gui.ScaledResolution
@@ -34,7 +35,9 @@ open class HUD : MinecraftInstance() {
                 Notifications::class.java,
                 TabGUI::class.java,
                 Text::class.java,
-                ScoreboardElement::class.java
+                ScoreboardElement::class.java,
+                Target::class.java,
+                Radar::class.java
         )
 
         /**
@@ -56,19 +59,23 @@ open class HUD : MinecraftInstance() {
      * Render all elements
      */
     fun render(designer: Boolean) {
-        for (element in elements) {
-            GL11.glPushMatrix()
-            GL11.glScalef(element.scale, element.scale, element.scale)
-            GL11.glTranslated(element.renderX, element.renderY, 0.0)
+        elements.sortedBy { -it.info.priority }
+                .forEach {
+                    GL11.glPushMatrix()
 
-            try {
-                element.border = element.drawElement()
+                    if (!it.info.disableScale)
+                        GL11.glScalef(it.scale, it.scale, it.scale)
 
-                if (designer)
-                    element.border?.draw()
-            } catch (ex: Exception) {
-                ClientUtils.getLogger()
-                        .error("Something went wrong while drawing ${element.name} element in HUD.", ex)
+                    GL11.glTranslated(it.renderX, it.renderY, 0.0)
+
+                    try {
+                        it.border = it.drawElement()
+
+                        if (designer)
+                            it.border?.draw()
+                    } catch (ex: Exception) {
+                        ClientUtils.getLogger()
+                                .error("Something went wrong while drawing ${it.name} element in HUD.", ex)
             }
 
             GL11.glPopMatrix()
