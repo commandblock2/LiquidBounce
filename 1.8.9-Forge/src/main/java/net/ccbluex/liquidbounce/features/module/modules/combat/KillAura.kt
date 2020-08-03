@@ -16,6 +16,7 @@ import net.ccbluex.liquidbounce.features.module.modules.player.Blink
 import net.ccbluex.liquidbounce.features.module.modules.render.FreeCam
 import net.ccbluex.liquidbounce.utils.EntityUtils
 import net.ccbluex.liquidbounce.utils.RaycastUtils
+import net.ccbluex.liquidbounce.utils.Rotation
 import net.ccbluex.liquidbounce.utils.RotationUtils
 import net.ccbluex.liquidbounce.utils.extensions.getDistanceToEntityBox
 import net.ccbluex.liquidbounce.utils.misc.RandomUtils
@@ -39,6 +40,7 @@ import net.minecraft.potion.Potion
 import net.minecraft.util.BlockPos
 import net.minecraft.util.EnumFacing
 import net.minecraft.util.MathHelper
+import net.minecraft.util.Vec3
 import net.minecraft.world.WorldSettings
 import org.lwjgl.input.Keyboard
 import java.awt.Color
@@ -624,7 +626,28 @@ class KillAura : Module() {
      */
     private fun startBlocking(interactEntity: Entity, interact: Boolean) {
         if (interact) {
-            mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, interactEntity.positionVector))
+            val positionEye = mc.renderViewEntity.getPositionEyes(1F)
+
+            val expandSize = interactEntity.collisionBorderSize.toDouble()
+            val aABB = interactEntity.entityBoundingBox.expand(expandSize, expandSize, expandSize)
+
+            val (yaw,pitch) = RotationUtils.targetRotation ?: Rotation(mc.thePlayer.rotationYaw,mc.thePlayer.rotationPitch)
+            val yawCos = MathHelper.cos(-yaw * 0.017453292f - Math.PI.toFloat())
+            val yawSin = MathHelper.sin(-yaw * 0.017453292f - Math.PI.toFloat())
+            val pitchCos = -MathHelper.cos(-pitch * 0.017453292f)
+            val pitchSin = MathHelper.sin(-pitch * 0.017453292f)
+            val range = min(maxRange.toDouble(), mc.thePlayer.getDistanceToEntityBox(interactEntity)) + 1
+            val lookAt = positionEye.addVector(yawSin * pitchCos * range, pitchSin * range, yawCos * pitchCos * range)
+
+            val movingObject = aABB.calculateIntercept(positionEye, lookAt)
+            movingObject ?: return
+            val hitVec = movingObject.hitVec
+
+            mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, Vec3(
+                hitVec.xCoord - interactEntity.posX,
+                hitVec.yCoord - interactEntity.posY,
+                hitVec.zCoord - interactEntity.posZ)
+            ))
             mc.netHandler.addToSendQueue(C02PacketUseEntity(interactEntity, C02PacketUseEntity.Action.INTERACT))
         }
 
