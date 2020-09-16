@@ -21,7 +21,7 @@ jobs:
           name: 1.8.9-LiquidBounce
           path: 1.8.9-Forge/build/libs/
       - name: Build 1.12.2 with Gradle
-          run: "chmod +x ./gradlew;mcversion=\"1.12\" ./gradlew build;ls 1.12.2-Forge/build/libs"
+          run: "chmod +x ./gradlew;mcversion='1.12' ./gradlew build;ls 1.12.2-Forge/build/libs"
             - name: Upload artifact
               uses: actions/upload-artifact@v1.0.0
               with:
