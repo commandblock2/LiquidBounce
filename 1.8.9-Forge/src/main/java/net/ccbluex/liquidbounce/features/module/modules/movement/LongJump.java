@@ -22,7 +22,7 @@ import net.minecraft.util.EnumFacing;
 @ModuleInfo(name = "LongJump", description = "Allows you to jump further.", category = ModuleCategory.MOVEMENT)
 public class LongJump extends Module {
 
-    private final ListValue modeValue = new ListValue("Mode", new String[] {"NCP", "AACv1", "AACv2", "AACv3", "Mineplex", "Mineplex2", "Mineplex3"}, "NCP");
+    private final ListValue modeValue = new ListValue("Mode", new String[] {"NCP", "AACv1", "AACv2", "AACv3", "Mineplex", "Mineplex2", "Mineplex3", "Redesky"}, "NCP");
     private final FloatValue ncpBoostValue = new FloatValue("NCPBoost", 4.25F, 1F, 10F);
 
     private final BoolValue autoJumpValue = new BoolValue("AutoJump", false);
@@ -98,6 +98,10 @@ public class LongJump extends Module {
                     mc.thePlayer.motionY += 0.0132099999999999999999999999999;
                     mc.thePlayer.jumpMovementFactor = 0.08F;
                     MovementUtils.strafe();
+                    break;
+                case "redesky":
+                    mc.thePlayer.jumpMovementFactor = 0.15f;
+                    mc.thePlayer.motionY += 0.05f;
                     break;
                 case "mineplex2":
                     if(!canMineplexBoost)
