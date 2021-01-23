@@ -78,7 +78,8 @@ public class Speed extends Module {
 
             // Other
             new SlowHop(),
-            new CustomSpeed()
+            new CustomSpeed(),
+            new Matrix()
     };
 
     public final ListValue modeValue = new ListValue("Mode", getModes(), "NCPBHop") {
