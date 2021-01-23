@@ -9,6 +9,7 @@ import net.ccbluex.liquidbounce.utils.MinecraftInstance
 import net.minecraft.block.Block
 import net.minecraft.block.material.Material
 import net.minecraft.block.state.IBlockState
+import net.minecraft.init.Blocks
 import net.minecraft.util.AxisAlignedBB
 import net.minecraft.util.BlockPos
 import net.minecraft.util.MathHelper
@@ -133,6 +134,53 @@ object BlockUtils : MinecraftInstance() {
         }
         return false
     }
+
+    @JvmStatic
+    fun bBoxIntersectsBlock(axisAlignedBB: AxisAlignedBB,collidable: Collidable) : Boolean
+    {
+        for (x in MathHelper.floor_double(axisAlignedBB.minX) until
+                MathHelper.floor_double(axisAlignedBB.maxX) + 1)
+        {
+            for (z in MathHelper.floor_double(axisAlignedBB.minZ) until
+                    MathHelper.floor_double(axisAlignedBB.maxZ) + 1)
+            {
+                for (y in MathHelper.floor_double(axisAlignedBB.minY) until
+                    MathHelper.floor_double(axisAlignedBB.maxY) + 1)
+                {
+                    val blockPos = BlockPos(x.toDouble(), y.toDouble(), z.toDouble())
+                    val block = getBlock(blockPos)
+
+                    if (collidable.collideBlock(block))
+                    {
+                        val boundingBox = block?.getCollisionBoundingBox(mc.theWorld, blockPos, getState(blockPos))
+                                ?: continue
+
+                        if (mc.thePlayer.entityBoundingBox.intersectsWith(boundingBox))
+                            return true
+                    }
+                }
+            }
+        }
+        return false
+    }
+
+    /**
+     *  Check if the block is passable
+     */
+
+    @JvmStatic
+    fun isBlockPassable(block : Block?): Boolean
+    {
+        block ?: return false
+
+        val material = block?.material
+        return block in passableBlocks || material in passableMaterial
+    }
+
+    private val passableMaterial = arrayOf(Material.air,Material.plants)
+    private val passableBlocks = arrayOf(Blocks.standing_sign, Blocks.wall_sign, Blocks.torch, Blocks.redstone_torch,
+            Blocks.redstone_wire, Blocks.wooden_button, Blocks.stone_button, Blocks.lever, Blocks.tripwire, Blocks.tripwire_hook,
+            Blocks.tallgrass, Blocks.red_flower, Blocks.yellow_flower)
 
     interface Collidable {
 
