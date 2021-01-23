@@ -66,6 +66,7 @@ public class Fly extends Module {
             "Mineplex",
             "NeruxVace",
             "Minesucht",
+            "Redesky",
 
             // Spartan
             "Spartan",
@@ -103,6 +104,7 @@ public class Fly extends Module {
     private final FloatValue mineplexSpeedValue = new FloatValue("MineplexSpeed", 1F, 0.5F, 10F);
     private final IntegerValue neruxVaceTicks = new IntegerValue("NeruxVace-Ticks", 6, 0, 20);
 
+    private final FloatValue redeskyHeight = new FloatValue("Redesky-Height", 4f, 1f, 7f);
     // Visuals
     private final BoolValue markValue = new BoolValue("Mark", true);
 
@@ -226,6 +228,11 @@ public class Fly extends Module {
                 lastDistance = 0D;
                 failedStart = false;
                 break;
+            case "redesky":
+                if(mc.thePlayer.onGround) {
+                    redeskyVClip1(redeskyHeight.get());
+                }
+                break;
         }
 
         startY = mc.thePlayer.posY;
@@ -244,6 +251,7 @@ public class Fly extends Module {
     @Override
     public void onDisable() {
         wasDead = false;
+        redeskySpeed(0);
 
         if (mc.thePlayer == null)
             return;
@@ -251,6 +259,10 @@ public class Fly extends Module {
         noFlag = false;
 
         final String mode = modeValue.get();
+
+        if(mode.equals("Redesky")){
+            redeskyHClip2(0.0);
+        }
 
         if (!mode.toUpperCase().startsWith("AAC") && !mode.equalsIgnoreCase("Hypixel") &&
                 !mode.equalsIgnoreCase("CubeCraft")) {
@@ -596,6 +608,15 @@ public class Fly extends Module {
                     mc.thePlayer.motionY -= vanillaSpeed;
                 MovementUtils.strafe(vanillaSpeed);
                 break;
+            case "redesky":
+                mc.timer.timerSpeed = 0.3f;
+                redeskyHClip2(7.0);
+                redeskyVClip2(10.0);
+                redeskyVClip1(-0.5f);
+                redeskyHClip1(2.0);
+                redeskySpeed(1);
+                mc.thePlayer.motionY = -0.01;
+                break;
         }
     }
 
@@ -791,6 +812,30 @@ public class Fly extends Module {
         mc.getNetHandler().addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX, mc.thePlayer.posY, mc.thePlayer.posZ, true));
 
         groundTimer.reset();
+    }
+
+    private void redeskyVClip1(Float vertical) {
+        mc.thePlayer.setPosition(mc.thePlayer.posX, mc.thePlayer.posY + vertical, mc.thePlayer.posZ);
+    }
+
+    private void redeskyHClip1(Double horizontal) {
+        double playerYaw = Math.toRadians(mc.thePlayer.rotationYaw);
+        mc.thePlayer.setPosition(mc.thePlayer.posX + horizontal * -Math.sin(playerYaw), mc.thePlayer.posY, mc.thePlayer.posZ + horizontal * Math.cos(playerYaw));
+    }
+
+    private void redeskyHClip2(Double horizontal) {
+        double playerYaw = Math.toRadians(mc.thePlayer.rotationYaw);
+        mc.getNetHandler().addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX + horizontal * -Math.sin(playerYaw), mc.thePlayer.posY, mc.thePlayer.posZ + horizontal * Math.cos(playerYaw), false));
+    }
+
+    private void redeskyVClip2(Double vertical) {
+        mc.getNetHandler().addToSendQueue(new C03PacketPlayer.C04PacketPlayerPosition(mc.thePlayer.posX, mc.thePlayer.posY + vertical, mc.thePlayer.posZ, false));
+    }
+
+    private void redeskySpeed(Integer speed) {
+        double playerYaw = Math.toRadians(mc.thePlayer.rotationYaw);
+        mc.thePlayer.motionX = speed * -Math.sin(playerYaw);
+        mc.thePlayer.motionZ = speed * Math.cos(playerYaw);
     }
 
     // TODO: Make better and faster calculation lol
