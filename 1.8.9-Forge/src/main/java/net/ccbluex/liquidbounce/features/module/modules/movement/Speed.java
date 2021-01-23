@@ -75,6 +75,7 @@ public class Speed extends Module {
             new HiveHop(),
             new HypixelHop(),
             new MineplexGround(),
+            new Mineplex(),
 
             // Other
             new SlowHop(),
