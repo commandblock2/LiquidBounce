@@ -80,7 +80,8 @@ public class Speed extends Module {
             // Other
             new SlowHop(),
             new CustomSpeed(),
-            new Matrix()
+            new Matrix(),
+            new Tunnel()
     };
 
     public final ListValue modeValue = new ListValue("Mode", getModes(), "NCPBHop") {
@@ -158,6 +159,17 @@ public class Speed extends Module {
 
         if(speedMode != null)
             speedMode.onTick();
+    }
+
+    @EventTarget
+    public void onBB(final BlockBBEvent event) {
+        if (mc.thePlayer != null && mc.thePlayer.isSneaking())
+            return;
+
+        final SpeedMode speedMode = getMode();
+
+        if (speedMode != null)
+            speedMode.onBB(event);
     }
 
     @Override

@@ -6,6 +6,7 @@
 package net.ccbluex.liquidbounce.features.module.modules.movement.speeds;
 
 import net.ccbluex.liquidbounce.LiquidBounce;
+import net.ccbluex.liquidbounce.event.BlockBBEvent;
 import net.ccbluex.liquidbounce.event.MoveEvent;
 import net.ccbluex.liquidbounce.features.module.modules.movement.Speed;
 import net.ccbluex.liquidbounce.utils.MinecraftInstance;
@@ -32,6 +33,8 @@ public abstract class SpeedMode extends MinecraftInstance {
     public abstract void onUpdate();
 
     public abstract void onMove(final MoveEvent event);
+
+    public void onBB(final BlockBBEvent event) {}
 
     public void onTick() {
     }
