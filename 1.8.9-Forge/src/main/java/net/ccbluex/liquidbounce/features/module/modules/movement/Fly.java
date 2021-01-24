@@ -82,7 +82,8 @@ public class Fly extends Module {
             // Other
             "Jetpack",
             "KeepAlive",
-            "Flag"
+            "Flag",
+            "Jump"
     }, "Vanilla");
 
     private final FloatValue vanillaSpeedValue = new FloatValue("VanillaSpeed", 2F, 0F, 5F);
@@ -617,6 +618,10 @@ public class Fly extends Module {
                 redeskySpeed(1);
                 mc.thePlayer.motionY = -0.01;
                 break;
+            case "jump":
+                if (mc.thePlayer.onGround)
+                    mc.thePlayer.jump();
+                break;
         }
     }
 
@@ -764,6 +769,10 @@ public class Fly extends Module {
         if (mc.thePlayer == null) return;
 
         final String mode = modeValue.get();
+
+        if (event.getBlock() instanceof BlockAir && mode.equalsIgnoreCase("Jump") && event.getY() < startY) {
+            event.setBoundingBox(AxisAlignedBB.fromBounds(event.getX(), event.getY(), event.getZ(), event.getX() + 1, startY, event.getZ() + 1));
+        }
 
         if (event.getBlock() instanceof BlockAir && (mode.equalsIgnoreCase("Hypixel") ||
                 mode.equalsIgnoreCase("BoostHypixel") || mode.equalsIgnoreCase("Rewinside") ||
