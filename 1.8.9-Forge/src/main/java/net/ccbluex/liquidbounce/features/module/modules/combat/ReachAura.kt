@@ -15,10 +15,7 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.Teams
 import net.ccbluex.liquidbounce.utils.EntityUtils
 import net.ccbluex.liquidbounce.utils.PathUtils
 import net.ccbluex.liquidbounce.utils.RotationUtils
-import net.ccbluex.liquidbounce.utils.astar.Astar
-import net.ccbluex.liquidbounce.utils.astar.NaiveAstarFlyNode
-import net.ccbluex.liquidbounce.utils.astar.NaiveAstarGroundNode
-import net.ccbluex.liquidbounce.utils.astar.NaiveAstarNode
+import net.ccbluex.liquidbounce.utils.astar.*
 import net.ccbluex.liquidbounce.utils.block.BlockUtils
 import net.ccbluex.liquidbounce.utils.block.BlockUtils.bBoxIntersectsBlock
 import net.ccbluex.liquidbounce.utils.block.BlockUtils.isBlockPassable
@@ -70,7 +67,7 @@ class ReachAura : Module()
     private val stopAtDistance = FloatValue("StopAtDistance", 2.0f, 2.0f, 6.0f)
 
     private val pathFindingMode = ListValue("PathFindingMode", arrayOf("Simple",
-            "NaiveAstarGround", "NaiveAstarFly"), "NaiveAstarFly")
+            "NaiveAstarGround", "NaiveAstarFly", "HorizontalNaiveAstar"), "NaiveAstarFly")
 
     private val targetModeValue = ListValue("TargetMode", arrayOf("Single", "Switch", "Multi"), "Switch")
     private val priorityValue = ListValue("Priority", arrayOf("Health", "Distance", "Direction", "LivingTime"), "Distance")
@@ -100,6 +97,9 @@ class ReachAura : Module()
 
     // Bypass
     private val swingValue = BoolValue("Swing", true)
+
+    public val suspendOtherMovement = BoolValue("SuspendOtherMovement", false)
+    private val countOnAllPacket = BoolValue("CountOnAllPacket", true)
 
     //queue
     private val reachAuraQueue = mutableListOf<Packet<INetHandlerPlayServer>>()
@@ -270,6 +270,9 @@ class ReachAura : Module()
         {
             state = false
         }
+
+        if (countOnAllPacket.get() && packet is C03PacketPlayer)
+            packets--
     }
 
     @EventTarget
@@ -349,14 +352,16 @@ class ReachAura : Module()
                     first.onGround = false
 
                 reachAuraQueue.removeAt(0)
-                packets--
+                if (!countOnAllPacket.get())
+                    packets--
                 continue
             }
 
             if (!pretend.get())
                 mc.netHandler.addToSendQueue(first)
             reachAuraQueue.removeAt(0)
-            packets--
+            if (!countOnAllPacket.get())
+                packets--
         }
     }
 
@@ -393,17 +398,22 @@ class ReachAura : Module()
         } else if (pathFindingMode.get().toLowerCase().contains("naiveastar"))
         {
             val ground = lowerCasePathfindString.contains("ground")
+            val horizontal = lowerCasePathfindString.contains("horizontal")
 
-            val begin = if (ground)
+            val begin = if (ground && !horizontal)
                 NaiveAstarGroundNode(floor(fromX).toInt(), floor(fromY).toInt(), floor(fromZ).toInt())
-            else
+            else if (!horizontal)
                 NaiveAstarFlyNode(floor(fromX).toInt(), floor(fromY).toInt(), floor(fromZ).toInt())
-
-
-            val end = if (ground)
-                NaiveAstarGroundNode(floor(toX).toInt(), floor(toY).toInt(), floor(toZ).toInt())
             else
+                HorizontalAstarFlyNode(floor(fromX).toInt(), floor(fromY).toInt(), floor(fromZ).toInt())
+
+
+            val end = if (ground && !horizontal)
+                NaiveAstarGroundNode(floor(toX).toInt(), floor(toY).toInt(), floor(toZ).toInt())
+            else if (!horizontal)
                 NaiveAstarFlyNode(floor(toX).toInt(), floor(toY).toInt(), floor(toZ).toInt())
+            else
+                HorizontalAstarFlyNode(floor(toX).toInt(), floor(fromY).toInt(), floor(toZ).toInt())
 
 
             val nodes = Astar.findPath(begin, end,
