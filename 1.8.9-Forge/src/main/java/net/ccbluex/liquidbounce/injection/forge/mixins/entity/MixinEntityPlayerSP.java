@@ -205,7 +205,7 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
                     } else {
                         this.sendQueue.addToSendQueue(new C03PacketPlayer(this.onGround));
                     }
-                } else if(!reachAura.getState() && !reachAura.getSuspendOtherMovement().get()){
+                } else if(!reachAura.getState() || reachAura.getSuspendOtherMovement().get()){
                     this.sendQueue.addToSendQueue(new C03PacketPlayer.C06PacketPlayerPosLook(this.motionX, -999.0D, this.motionZ, yaw, pitch, this.onGround));
                     moved = false;
                 }
