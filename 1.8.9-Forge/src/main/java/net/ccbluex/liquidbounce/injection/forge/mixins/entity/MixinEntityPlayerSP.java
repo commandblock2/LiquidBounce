@@ -195,7 +195,7 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
                 boolean moved = xDiff * xDiff + yDiff * yDiff + zDiff * zDiff > 9.0E-4D || this.positionUpdateTicks >= 20;
                 boolean rotated = yawDiff != 0.0D || pitchDiff != 0.0D;
 
-                if (this.ridingEntity == null && (!reachAura.getState() || reachAura.getSuspendOtherMovement().get())) {
+                if (this.ridingEntity == null && (!reachAura.getState() || !reachAura.getSuspendOtherMovement().get())) {
                     if (moved && rotated) {
                         this.sendQueue.addToSendQueue(new C03PacketPlayer.C06PacketPlayerPosLook(this.posX, this.getEntityBoundingBox().minY, this.posZ, yaw, pitch, this.onGround));
                     } else if (moved) {
@@ -205,7 +205,7 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
                     } else {
                         this.sendQueue.addToSendQueue(new C03PacketPlayer(this.onGround));
                     }
-                } else if(!reachAura.getState() || reachAura.getSuspendOtherMovement().get()){
+                } else if(!reachAura.getState() || !reachAura.getSuspendOtherMovement().get()){
                     this.sendQueue.addToSendQueue(new C03PacketPlayer.C06PacketPlayerPosLook(this.motionX, -999.0D, this.motionZ, yaw, pitch, this.onGround));
                     moved = false;
                 }
