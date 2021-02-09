@@ -52,7 +52,7 @@ import kotlin.math.*
 
 @ModuleInfo(name = "ReachAura", description = "ReachAura or TpAura or InfiniteAura, the glitchy version",
         category = ModuleCategory.COMBAT)
-class ReachAura : Module()
+class LegacyReachAura : Module()
 {
 
     /**
