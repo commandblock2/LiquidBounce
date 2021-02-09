@@ -179,7 +179,7 @@ class ModuleManager : Listenable {
                 ResourcePackSpoof::class.java,
                 NoSlowBreak::class.java,
                 PortalMenu::class.java,
-                ReachAura::class.java
+                LegacyReachAura::class.java
         )
 
         registerModule(NoScoreboard)
