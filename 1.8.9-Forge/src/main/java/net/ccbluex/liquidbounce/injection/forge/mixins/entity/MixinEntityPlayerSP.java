@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.injection.forge.mixins.entity;
 
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.event.*;
+import net.ccbluex.liquidbounce.features.module.modules.annoyance.InsultAssistant;
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura;
 import net.ccbluex.liquidbounce.features.module.modules.combat.LegacyReachAura;
 import net.ccbluex.liquidbounce.features.module.modules.exploit.AntiHunger;
@@ -18,6 +19,7 @@ import net.ccbluex.liquidbounce.features.module.modules.movement.Sneak;
 import net.ccbluex.liquidbounce.features.module.modules.movement.Sprint;
 import net.ccbluex.liquidbounce.features.module.modules.render.NoSwing;
 import net.ccbluex.liquidbounce.features.module.modules.world.Scaffold;
+import net.ccbluex.liquidbounce.utils.Insult;
 import net.ccbluex.liquidbounce.utils.MovementUtils;
 import net.ccbluex.liquidbounce.utils.Rotation;
 import net.ccbluex.liquidbounce.utils.RotationUtils;
@@ -35,6 +37,7 @@ import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemSword;
+import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.network.play.client.C03PacketPlayer;
 import net.minecraft.network.play.client.C0APacketAnimation;
 import net.minecraft.network.play.client.C0BPacketEntityAction;
@@ -240,6 +243,17 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
             if (!noSwing.getServerSideValue().get())
                 this.sendQueue.addToSendQueue(new C0APacketAnimation());
         }
+    }
+
+    /**
+     * @author commandblock2
+     */
+    @Overwrite
+    public void sendChatMessage(String message){
+        final InsultAssistant insultAssistant = (InsultAssistant) LiquidBounce.moduleManager.getModule(InsultAssistant.class);
+
+        insultAssistant.recordUse(message);
+        this.sendQueue.addToSendQueue(new C01PacketChatMessage(message));
     }
 
     @Inject(method = "pushOutOfBlocks", at = @At("HEAD"), cancellable = true)

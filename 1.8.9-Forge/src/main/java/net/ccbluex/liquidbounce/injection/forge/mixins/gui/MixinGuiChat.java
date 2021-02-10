@@ -6,6 +6,7 @@
 package net.ccbluex.liquidbounce.injection.forge.mixins.gui;
 
 import net.ccbluex.liquidbounce.LiquidBounce;
+import net.ccbluex.liquidbounce.features.module.modules.annoyance.InsultAssistant;
 import net.ccbluex.liquidbounce.utils.render.RenderUtils;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiChat;
@@ -97,6 +98,16 @@ public abstract class MixinGuiChat extends MixinGuiScreen {
 
             callbackInfo.cancel();
         }
+
+        InsultAssistant insultAssistant = (InsultAssistant) LiquidBounce.moduleManager.getModule(InsultAssistant.class);
+        if (insultAssistant.getState() && full.contains(insultAssistant.getPrefix().get())) {
+
+            waitingOnAutocomplete = true;
+
+            this.onAutocompleteResponse(insultAssistant.handleTabComplete(inputField.getText()));
+
+            callbackInfo.cancel();
+        }
     }
 
     /**
@@ -108,6 +119,8 @@ public abstract class MixinGuiChat extends MixinGuiScreen {
     @Inject(method = "onAutocompleteResponse", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiChat;autocompletePlayerNames(F)V", shift = At.Shift.BEFORE), cancellable = true)
     private void onAutocompleteResponse(String[] autoCompleteResponse, CallbackInfo callbackInfo) {
         if (LiquidBounce.commandManager.getLatestAutoComplete().length != 0) callbackInfo.cancel();
+        InsultAssistant insultAssistant = (InsultAssistant) LiquidBounce.moduleManager.getModule(InsultAssistant.class);
+        if (insultAssistant.getState() && insultAssistant.handleTabComplete(inputField.getText()).length != 0) callbackInfo.cancel();
     }
 
     /**

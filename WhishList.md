@@ -1,5 +1,5 @@
-##WhishList
-###Some of the modules in scripts will be migrated to the client for better performance.
+## WhishList
+### Some of the modules in scripts will be migrated to the client for better performance.
 
 ModuleName | Category | Description | Complexity | Priority 
 -----------|----------|-------------|------------|----------
@@ -19,14 +19,14 @@ Enemy | Annoyance | Higher priority for certain entity | Medium | Somewhat Mediu
 
 
 
-###Other than Modules  
+### Other than Modules  
 
 Function  | Description | Complexity | Priority
 ----------|-------------|------------|----------
 Various pathfinding method | For ReachAura / Follow | Somewhat High | Medium
 
 
-###Improvements
+### Improvements
 
 Improvement Description | Complexity | Priority
 ------------------------|------------|----------
