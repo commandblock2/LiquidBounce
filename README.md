@@ -1,14 +1,14 @@
 # LiquidBounce
-A free mixin-based injection hacked-client for Minecraft using Minecraft Forge.
+A free mixin-based injection hacked-client for Minecraft using Minecraft Forge, supporting versions 1.12.2 and 1.8.9, and soon will support 1.16.3.
 
 Website: https://liquidbounce.net \
-Forum: https://forum.ccbluex.net/index.php \
+Forum: https://forums.ccbluex.net \
 Discord: https://discord.gg/gdQ82He \
 YouTube: https://youtube.com/CCBlueX \
 Twitter: https://twitter.com/CCBlueX 
 
 ## Issues
-If you notice any bugs or missing features, you can let us know by opening an issue [here](https://github.com/CCBlueX/LiquidBounce1.8-Issues/issues).
+If you notice any bugs or missing features, you can let us know by opening an issue [here](https://github.com/CCBlueX/LiquidBounce/issues).
 
 ## License
 This project is subject to the [GNU General Public License v3.0](LICENSE). This does only apply for source code located directly in this clean repository. During the development and compilation process, additional source code may be used to which we have obtained no rights. Such code is not covered by the GPL license.

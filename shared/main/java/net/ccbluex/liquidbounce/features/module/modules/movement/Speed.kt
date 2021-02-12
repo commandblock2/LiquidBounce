@@ -62,7 +62,9 @@ class Speed : Module() {
             TeleportCubeCraft(),  // Server
             HiveHop(),
             HypixelHop(),
+            Mineplex(),
             MineplexGround(),  // Other
+            Matrix(),
             SlowHop(),
             CustomSpeed()
     )
