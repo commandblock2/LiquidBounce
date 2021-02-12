@@ -182,7 +182,8 @@ class ModuleManager : Listenable {
                 NoSlowBreak::class.java,
                 PortalMenu::class.java,
                 LegacyReachAura::class.java,
-                InsultAssistant::class.java
+                InsultAssistant::class.java,
+                VanillaAura::class.java
         )
 
         registerModule(NoScoreboard)

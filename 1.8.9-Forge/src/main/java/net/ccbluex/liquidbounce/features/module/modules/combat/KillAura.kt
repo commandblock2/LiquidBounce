@@ -476,7 +476,9 @@ class KillAura : Module() {
     /**
      * Check if [entity] is selected as enemy with current target options and other modules
      */
-    private fun isEnemy(entity: Entity?): Boolean {
+    // I hate this but this need to be decoupled from the module
+    // Now I shall borrow this function
+    public fun isEnemy(entity: Entity?): Boolean {
         if (entity is EntityLivingBase && (EntityUtils.targetDead || isAlive(entity)) && entity != mc.thePlayer) {
             if (!EntityUtils.targetInvisible && entity.isInvisible())
                 return false
