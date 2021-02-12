@@ -24,9 +24,13 @@ Enemy | Annoyance | Higher priority for certain entity | Medium | Somewhat Mediu
 
 Function  | Description | Complexity | Priority
 ----------|-------------|------------|----------
+Baritone | Either port baritone to 1.8.x or copy(must respect license)/reimplement one, might be alternative to the pathfinding below | Extremely high (need more research) | Somewhat High to research
 Various pathfinding method | For ReachAura / Follow | Somewhat High | Medium
 Ownership of resource | Player's yaw/pitch, slot, pressed keybinds etc | Somewhat High | Medium
-Decouple the target selection / priority from KillAura | So that aimbot / other module could have seperate instances of target selection / priority and also easier to implement enemy | Somewhat High | Medium 
+Decouple the target selection / priority from KillAura | So that aimbot / other module could have seperate instances of target selection / priority and also easier to implement enemy | Somewhat High | Medium
+Generate mcpr file | to generate replaymod compatible mcpr file aka packet capture | Medium (need more research) | Somewhat High to research
+Client Side hack detection | like the name | Medium | Somewhat Medium
+Port the SpeedGraph | like the name | Somewhat Medium | Medium
 
 ### Improvements
 
@@ -34,4 +38,4 @@ Improvement Description | Complexity | Priority
 ------------------------|------------|----------
 NameTag that shows enchantment | Somewhat Medium | Low
 NameTag that shows entityID | Low | Medium
-Better Notification(Half transparent/Acrylic) | Somewhat Medium | Medium
+Better Notification(Half transparent/Acrylic) and use move the chats to notification | Somewhat Medium | Medium
