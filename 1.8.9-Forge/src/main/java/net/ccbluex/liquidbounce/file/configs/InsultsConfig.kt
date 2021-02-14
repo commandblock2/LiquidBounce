@@ -43,7 +43,7 @@ class InsultsConfig(file: File?) : FileConfig(file) {
             val used = insultJson.get("used")?.asInt ?: continue
 
 
-            insults.add(Insult(insults.size, text, tags, used))
+            insults.add(Insult(text, tags, used))
         }
     }
 
@@ -63,7 +63,7 @@ class InsultsConfig(file: File?) : FileConfig(file) {
 
             val jsonTags = JsonArray()
             for (tag in insult.tags)
-                jsonTags.add(tag)
+                jsonTags.add(FileManager.PRETTY_GSON.toJsonTree(tag))
 
             jsonInsult.add("tags", jsonTags)
             jsonInsult.addProperty("used", insult.used)

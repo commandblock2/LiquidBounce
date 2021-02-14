@@ -22,11 +22,11 @@ class InsultCommand : Command("Insults", arrayOf("iss")) {
                 when (args.size) {
                     2 -> chat("insults new <message> [tags]")
                     3 -> {
-                        insults.add(Insult(insults.size, args[2], emptyList(), 0))
+                        insults.add(Insult(args[2], emptyList(), 0))
                         chat("messaged added" + insults.last())
                     }
                     else -> {
-                        insults.add(Insult(insults.size, args[2], args.slice(3 until args.size), 0))
+                        insults.add(Insult(args[2], args.slice(3 until args.size), 0))
                         chat("messaged added" + insults.last())
                     }
                 }
@@ -38,7 +38,7 @@ class InsultCommand : Command("Insults", arrayOf("iss")) {
                     val fileName = file.name
 
                     File(fileName).forEachLine {
-                        insults.add(Insult(insults.size, it, emptyList(), 0))
+                        insults.add(Insult(it, emptyList(), 0))
                     }
                 } catch (t: Throwable) {
                     ClientUtils.getLogger().error("Something went wrong while importing a insult text.", t)
@@ -100,7 +100,7 @@ class InsultCommand : Command("Insults", arrayOf("iss")) {
         if (args.isEmpty()) return emptyList()
 
         return when (args.size) {
-            1 -> listOf("new", "import", "tag", "view", "random")
+            1 -> listOf("new", "import", "tag", "view", "random", "remove")
                 .filter { it.startsWith(args[0], true) }
             else -> emptyList()
         }
