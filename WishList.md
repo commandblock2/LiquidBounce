@@ -39,3 +39,5 @@ Improvement Description | Complexity | Priority
 NameTag that shows enchantment | Somewhat Medium | Low
 NameTag that shows entityID | Low | Medium
 Better Notification(Half transparent/Acrylic) and use move the chats to notification | Somewhat Medium | Medium
+A freecam that is only based on camera translation | Somewhat Medium | Low
+Make all modules that owns the player's rotation use targetRotation | Medium | Somewhat Medium

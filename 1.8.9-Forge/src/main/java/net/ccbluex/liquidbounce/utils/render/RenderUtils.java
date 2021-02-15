@@ -20,10 +20,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Timer;
+import net.minecraft.util.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -603,6 +600,35 @@ public final class RenderUtils extends MinecraftInstance {
         glVertex2d(x1, y1);
         glEnd();
         glEnable(GL_TEXTURE_2D);
+    }
+
+    public static void drawPoses(Color color, java.util.List<Vec3> positions) {
+        glPushMatrix();
+
+        glDisable(GL_TEXTURE_2D);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        mc.entityRenderer.disableLightmap();
+        glBegin(GL_LINE_STRIP);
+        RenderUtils.glColor(color);
+        final double renderPosX = mc.getRenderManager().viewerPosX;
+        final double renderPosY = mc.getRenderManager().viewerPosY;
+        final double renderPosZ = mc.getRenderManager().viewerPosZ;
+
+        for(Vec3 pos : positions)
+            glVertex3d(pos.xCoord - renderPosX, pos.yCoord - renderPosY, pos.zCoord - renderPosZ);
+
+        glColor4d(1, 1, 1, 1);
+        glEnd();
+        glEnable(GL_DEPTH_TEST);
+        glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_BLEND);
+        glEnable(GL_TEXTURE_2D);
+        glPopMatrix();
+
+        RenderUtils.glColor(0, 0, 0, 0);
     }
 
     public static void makeScissorBox(final float x, final float y, final float x2, final float y2) {

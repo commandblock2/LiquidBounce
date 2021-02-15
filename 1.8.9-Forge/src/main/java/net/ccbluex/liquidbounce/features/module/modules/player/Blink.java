@@ -22,9 +22,11 @@ import net.ccbluex.liquidbounce.value.IntegerValue;
 import net.minecraft.client.entity.EntityOtherPlayerMP;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.client.*;
+import net.minecraft.util.Vec3;
 
 import java.awt.*;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.lwjgl.opengl.GL11.*;
@@ -35,7 +37,7 @@ public class Blink extends Module {
     private final LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
     private EntityOtherPlayerMP fakePlayer = null;
     private boolean disableLogger;
-    private final LinkedList<double[]> positions = new LinkedList<>();
+    private final LinkedList<Vec3> positions = new LinkedList<>();
 
     private final BoolValue pulseValue = new BoolValue("Pulse", false);
     private final IntegerValue pulseDelayValue = new IntegerValue("PulseDelay", 1000, 500, 5000);
@@ -56,8 +58,8 @@ public class Blink extends Module {
         }
 
         synchronized(positions) {
-            positions.add(new double[] {mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY + (mc.thePlayer.getEyeHeight() / 2), mc.thePlayer.posZ});
-            positions.add(new double[] {mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ});
+            positions.add(new Vec3(mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY + (mc.thePlayer.getEyeHeight() / 2), mc.thePlayer.posZ));
+            positions.add(new Vec3(mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ));
         }
 
         pulseTimer.reset();
@@ -98,7 +100,7 @@ public class Blink extends Module {
     @EventTarget
     public void onUpdate(UpdateEvent event) {
         synchronized(positions) {
-            positions.add(new double[] {mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ});
+            positions.add(new Vec3(mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ));
         }
 
         if(pulseValue.get() && pulseTimer.hasTimePassed(pulseDelayValue.get())) {
@@ -113,30 +115,7 @@ public class Blink extends Module {
         final Color color = breadcrumbs.colorRainbow.get() ? ColorUtils.rainbow() : new Color(breadcrumbs.colorRedValue.get(), breadcrumbs.colorGreenValue.get(), breadcrumbs.colorBlueValue.get());
 
         synchronized(positions) {
-            glPushMatrix();
-
-            glDisable(GL_TEXTURE_2D);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_LINE_SMOOTH);
-            glEnable(GL_BLEND);
-            glDisable(GL_DEPTH_TEST);
-            mc.entityRenderer.disableLightmap();
-            glBegin(GL_LINE_STRIP);
-            RenderUtils.glColor(color);
-            final double renderPosX = mc.getRenderManager().viewerPosX;
-            final double renderPosY = mc.getRenderManager().viewerPosY;
-            final double renderPosZ = mc.getRenderManager().viewerPosZ;
-
-            for(final double[] pos : positions)
-                glVertex3d(pos[0] - renderPosX, pos[1] - renderPosY, pos[2] - renderPosZ);
-
-            glColor4d(1, 1, 1, 1);
-            glEnd();
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_BLEND);
-            glEnable(GL_TEXTURE_2D);
-            glPopMatrix();
+            RenderUtils.drawPoses(color, positions);
         }
     }
 

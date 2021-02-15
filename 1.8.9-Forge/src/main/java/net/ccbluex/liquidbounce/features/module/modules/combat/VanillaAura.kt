@@ -44,7 +44,8 @@ class VanillaAura : Module() {
 
         val selected = targets.slice(0..if(multi.get())targets.size - 1 else 1)
 
-        if (mc.thePlayer.heldItem.item is ItemSword)
+        val handNull = mc.thePlayer.heldItem == null
+        if (!handNull && mc.thePlayer.heldItem.item is ItemSword)
             mc.netHandler.addToSendQueue(C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM,
             BlockPos.ORIGIN, EnumFacing.DOWN
             ))
@@ -57,7 +58,7 @@ class VanillaAura : Module() {
             }
         }
 
-        if (mc.thePlayer.heldItem.item is ItemSword)
+        if (!handNull && mc.thePlayer.heldItem.item is ItemSword)
             mc.netHandler.addToSendQueue(C08PacketPlayerBlockPlacement(mc.thePlayer.inventory.getCurrentItem()))
     }
 

@@ -15,6 +15,7 @@ import net.ccbluex.liquidbounce.utils.render.ColorUtils;
 import net.ccbluex.liquidbounce.utils.render.RenderUtils;
 import net.ccbluex.liquidbounce.value.BoolValue;
 import net.ccbluex.liquidbounce.value.IntegerValue;
+import net.minecraft.util.Vec3;
 
 import java.awt.*;
 import java.util.LinkedList;
@@ -27,44 +28,21 @@ public class Breadcrumbs extends Module {
     public final IntegerValue colorGreenValue = new IntegerValue("G", 179, 0, 255);
     public final IntegerValue colorBlueValue = new IntegerValue("B", 72, 0, 255);
     public final BoolValue colorRainbow = new BoolValue("Rainbow", false);
-    private final LinkedList<double[]> positions = new LinkedList<>();
+    private final LinkedList<Vec3> positions = new LinkedList<>();
 
     @EventTarget
     public void onRender3D(Render3DEvent event) {
         final Color color = colorRainbow.get() ? ColorUtils.rainbow() : new Color(colorRedValue.get(), colorGreenValue.get(), colorBlueValue.get());
 
         synchronized (positions) {
-            glPushMatrix();
-
-            glDisable(GL_TEXTURE_2D);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_LINE_SMOOTH);
-            glEnable(GL_BLEND);
-            glDisable(GL_DEPTH_TEST);
-            mc.entityRenderer.disableLightmap();
-            glBegin(GL_LINE_STRIP);
-            RenderUtils.glColor(color);
-            final double renderPosX = mc.getRenderManager().viewerPosX;
-            final double renderPosY = mc.getRenderManager().viewerPosY;
-            final double renderPosZ = mc.getRenderManager().viewerPosZ;
-
-            for (final double[] pos : positions)
-                glVertex3d(pos[0] - renderPosX, pos[1] - renderPosY, pos[2] - renderPosZ);
-
-            glColor4d(1, 1, 1, 1);
-            glEnd();
-            glEnable(GL_DEPTH_TEST);
-            glDisable(GL_LINE_SMOOTH);
-            glDisable(GL_BLEND);
-            glEnable(GL_TEXTURE_2D);
-            glPopMatrix();
+            RenderUtils.drawPoses(color, positions);
         }
     }
 
     @EventTarget
     public void onUpdate(UpdateEvent event) {
         synchronized (positions) {
-            positions.add(new double[]{mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ});
+            positions.add(new Vec3(mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ));
         }
     }
 
@@ -74,10 +52,10 @@ public class Breadcrumbs extends Module {
             return;
 
         synchronized (positions) {
-            positions.add(new double[]{mc.thePlayer.posX,
+            positions.add(new Vec3(mc.thePlayer.posX,
                     mc.thePlayer.getEntityBoundingBox().minY + (mc.thePlayer.getEyeHeight() * 0.5f),
-                    mc.thePlayer.posZ});
-            positions.add(new double[]{mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ});
+                    mc.thePlayer.posZ));
+            positions.add(new Vec3(mc.thePlayer.posX, mc.thePlayer.getEntityBoundingBox().minY, mc.thePlayer.posZ));
         }
         super.onEnable();
     }

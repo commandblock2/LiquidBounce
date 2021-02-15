@@ -183,7 +183,8 @@ class ModuleManager : Listenable {
                 PortalMenu::class.java,
                 LegacyReachAura::class.java,
                 InsultAssistant::class.java,
-                VanillaAura::class.java
+                VanillaAura::class.java,
+                ArrowDodge::class.java
         )
 
         registerModule(NoScoreboard)
