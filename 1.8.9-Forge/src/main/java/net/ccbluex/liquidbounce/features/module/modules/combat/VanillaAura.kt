@@ -42,7 +42,7 @@ class VanillaAura : Module() {
         if (targets.isEmpty())
             return
 
-        val selected = targets.slice(0..if(multi.get())targets.size - 1 else 1)
+        val selected = if (multi.get()) targets else listOf(targets[0])
 
         val handNull = mc.thePlayer.heldItem == null
         if (!handNull && mc.thePlayer.heldItem.item is ItemSword)
