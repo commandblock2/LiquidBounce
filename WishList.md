@@ -31,6 +31,7 @@ Decouple the target selection / priority from KillAura | So that aimbot / other 
 Generate mcpr file | to generate replaymod compatible mcpr file aka packet capture | Medium (need more research) | Somewhat High to research
 Client Side hack detection | like the name | Medium | Somewhat Medium
 Port the SpeedGraph | like the name | Somewhat Medium | Medium
+A separated console for commands | and also a console for js | High | Somewhat Medium
 
 ### Improvements
 
@@ -41,3 +42,4 @@ NameTag that shows entityID | Low | Medium
 Better Notification(Half transparent/Acrylic) and use move the chats to notification | Somewhat Medium | Medium
 A freecam that is only based on camera translation | Somewhat Medium | Low
 Make all modules that owns the player's rotation use targetRotation | Medium | Somewhat Medium
+Experimental change on RotationUtils for less yaw change | Somewhat Medium | Medium

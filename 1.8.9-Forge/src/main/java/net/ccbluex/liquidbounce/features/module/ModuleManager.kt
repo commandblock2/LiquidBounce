@@ -184,7 +184,8 @@ class ModuleManager : Listenable {
                 LegacyReachAura::class.java,
                 InsultAssistant::class.java,
                 VanillaAura::class.java,
-                ArrowDodge::class.java
+                ArrowDodge::class.java,
+                WtapBot::class.java
         )
 
         registerModule(NoScoreboard)
