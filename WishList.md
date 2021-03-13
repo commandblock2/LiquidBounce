@@ -17,6 +17,7 @@ WordTransform | Annoyance | Transform certain words on the fly to other to avoid
 WordRepeater | Annoyance | Repeat some words by regex match | Low | Medium
 KeywordBlock | Annoyance | Block certain chat based on regex | Low | Medium
 Enemy | Annoyance | Higher priority for certain entity | Medium | Somewhat Medium
+BoatFly | Movement | Fly with a boat | Low | Low
 
 
 
@@ -43,3 +44,4 @@ Better Notification(Half transparent/Acrylic) and use move the chats to notifica
 A freecam that is only based on camera translation | Somewhat Medium | Low
 Make all modules that owns the player's rotation use targetRotation | Medium | Somewhat Medium
 Experimental change on RotationUtils for less yaw change | Somewhat Medium | Medium
+Self saving like mode for bugup | Somewhat Medium | Low

@@ -16,6 +16,7 @@ import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.special.AntiForge
 import net.ccbluex.liquidbounce.features.special.BungeeCordSpoof
 import net.ccbluex.liquidbounce.features.special.DonatorCape
+import net.ccbluex.liquidbounce.features.special.ReplayRecording
 import net.ccbluex.liquidbounce.file.FileManager
 import net.ccbluex.liquidbounce.script.ScriptManager
 import net.ccbluex.liquidbounce.script.remapper.Remapper.loadSrg
@@ -87,6 +88,7 @@ object LiquidBounce {
         eventManager.registerListener(BungeeCordSpoof())
         eventManager.registerListener(DonatorCape())
         eventManager.registerListener(InventoryUtils())
+        eventManager.registerListener(ReplayRecording)
 
         // Create command manager
         commandManager = CommandManager()
@@ -131,7 +133,8 @@ object LiquidBounce {
 
         // Register capes service
         try {
-            registerCapeService()
+            //registerCapeService()
+            //currently cape service seemed to be down and the service will spam exceptions in log
         } catch (throwable: Throwable) {
             ClientUtils.getLogger().error("Failed to register cape service", throwable)
         }

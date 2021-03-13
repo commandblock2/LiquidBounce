@@ -1,4 +1,4 @@
-# LiquidBounce-Legacy
+# LiquidBounce-Legacy-1.8
 A fork of the free mixin-based injection hacked-client for Minecraft using Minecraft Forge.
 
 1.8 only.

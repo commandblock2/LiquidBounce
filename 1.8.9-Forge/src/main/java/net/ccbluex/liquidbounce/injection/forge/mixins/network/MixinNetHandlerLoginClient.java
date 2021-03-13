@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.injection.forge.mixins.network;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import net.ccbluex.liquidbounce.features.special.ReplayRecording;
 import net.ccbluex.liquidbounce.utils.ClientUtils;
 import net.mcleaks.MCLeaks;
 import net.mcleaks.Session;
@@ -42,6 +43,12 @@ public class MixinNetHandlerLoginClient {
     @Shadow
     @Final
     private NetworkManager networkManager;
+
+    @Inject(method = "handleLoginSuccess", at = @At("HEAD"))
+    public void initRecording(CallbackInfo callbackInfo) {
+        if (ReplayRecording.INSTANCE.getEnabled())
+            ReplayRecording.INSTANCE.onConnect();
+    }
 
     @Inject(method = "handleEncryptionRequest", at = @At("HEAD"), cancellable = true)
     private void handleEncryptionRequest(S01PacketEncryptionRequest packetIn, CallbackInfo callbackInfo) {

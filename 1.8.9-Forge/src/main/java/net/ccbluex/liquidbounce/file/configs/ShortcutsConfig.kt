@@ -78,7 +78,7 @@ class ShortcutsConfig(file: File) : FileConfig(file) {
 
                 val argumentsObject = JsonArray()
                 for (argument in pair.second) {
-                    argumentsObject.add(argument)
+                    argumentsObject.add(FileManager.PRETTY_GSON.toJsonTree(argument))
                 }
 
                 pairObject.add("arguments", argumentsObject)

@@ -9,6 +9,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.file.configs.*;
+import net.ccbluex.liquidbounce.utils.ClassUtils;
 import net.ccbluex.liquidbounce.utils.ClientUtils;
 import net.ccbluex.liquidbounce.utils.MinecraftInstance;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -28,6 +29,7 @@ public class FileManager extends MinecraftInstance {
     public final File dir = new File(mc.mcDataDir, LiquidBounce.CLIENT_NAME + "-1.8");
     public final File fontsDir = new File(dir, "fonts");
     public final File settingsDir = new File(dir, "settings");
+    public final File replaysDir = new File(dir, "replays");
 
     public final FileConfig modulesConfig = new ModulesConfig(new File(dir, "modules.json"));
     public final FileConfig valuesConfig = new ValuesConfig(new File(dir, "values.json"));
@@ -68,6 +70,9 @@ public class FileManager extends MinecraftInstance {
 
         if(!settingsDir.exists())
             settingsDir.mkdir();
+
+        if (!replaysDir.exists() && ClassUtils.hasClass("net.minecraftforge.common.MinecraftForge"))
+            replaysDir.mkdir();
     }
 
     /**

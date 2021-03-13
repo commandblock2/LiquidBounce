@@ -85,6 +85,8 @@ dependencies {
     compile 'com.github.TheAltening:API-Java:api-2.0-SNAPSHOT'
     compile 'com.github.TheAltening:API-Java-AuthLib:-SNAPSHOT'
 
+    compile 'com.github.replaymod:ReplayStudio:a2168ca'
+
     compile fileTree(include: ['*.jar'], dir: 'libs')
 }
 
@@ -137,6 +139,8 @@ shadowJar {
 
         include(dependency('com.github.TheAltening:API-Java'))
         include(dependency('com.github.TheAltening:API-Java-AuthLib'))
+
+        include(dependency('com.github.replaymod:ReplayStudio'))
     }
 
     exclude 'dummyThing'

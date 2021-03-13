@@ -9,6 +9,7 @@ import net.ccbluex.liquidbounce.features.module.Module
 import net.ccbluex.liquidbounce.features.module.ModuleCategory
 import net.ccbluex.liquidbounce.features.module.ModuleInfo
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Notification
+import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.RotationUtils
 import net.ccbluex.liquidbounce.utils.extensions.getDistanceToEntityBox
 import net.ccbluex.liquidbounce.utils.timer.MSTimer
@@ -26,11 +27,14 @@ import net.minecraft.network.play.server.*
 import net.minecraft.realms.RealmsMth.clamp
 import net.minecraft.util.Vec3
 import org.lwjgl.input.Keyboard
+import java.lang.Exception
 import kotlin.math.abs
 import kotlin.math.floor
 
-@ModuleInfo(name = "WtapBot", description = "The module emulate the legit player's combat action.",
-    category = ModuleCategory.COMBAT)
+@ModuleInfo(
+    name = "WtapBot", description = "The module emulate the legit player's combat action.",
+    category = ModuleCategory.COMBAT
+)
 class WtapBot : Module() {
 
     private val maxCPSValue: IntegerValue = object : IntegerValue("MaxCPS", 8, 1, 20) {
@@ -54,7 +58,6 @@ class WtapBot : Module() {
     }
 
     private val captureRange = FloatValue("CaptureRange", 15f, 10f, 30f)
-
 
 
     //is set manually in case u use more than normal reach
@@ -97,8 +100,11 @@ class WtapBot : Module() {
     @EventTarget
     fun onRender3D(render3DEvent: Render3DEvent) {
 
-        if (target != null && target !in mc.theWorld.loadedEntityList)
-            reset()
+        if (mc.gameSettings.keyBindAttack.pressed && !lastFrameLeftDown)
+            onLeftClick()
+
+        lastFrameLeftDown = mc.gameSettings.keyBindAttack.pressed
+
 
         if (target != null && !mc.thePlayer.isUsingItem && System.currentTimeMillis() - leftLastSwing >= leftDelay) {
             KeyBinding.onTick(mc.gameSettings.keyBindAttack.keyCode) // Minecraft Click Handling
@@ -107,21 +113,22 @@ class WtapBot : Module() {
             leftDelay = TimeUtils.randomClickDelay(minCPSValue.get(), maxCPSValue.get())
         }
 
-        if (mc.gameSettings.keyBindAttack.pressed && !lastFrameLeftDown)
-            onLeftClick()
-
-        lastFrameLeftDown = mc.gameSettings.keyBindAttack.pressed
+        if (target != null && target !in mc.theWorld.loadedEntityList)
+            reset()
 
         target ?: return
 
         if (mc.thePlayer.getDistanceToEntityBox(target!!) > captureRange.get())
             reset()
 
+        target ?: return
+
         if (mc.thePlayer.getDistanceToEntityBox(target!!) > reach.get() + 3f)
             combo = 0
 
         aim()
         setKeyStates()
+
     }
 
     @EventTarget
@@ -155,11 +162,13 @@ class WtapBot : Module() {
         target ?: return
         if (packetEvent.packet is S19PacketEntityStatus &&
             packetEvent.packet.getEntity(mc.theWorld) == target &&
-                packetEvent.packet.opCode.toInt() == 2)
+            packetEvent.packet.opCode.toInt() == 2
+        )
             combo++
     }
 
     private fun reset() {
+
         counts = 5
         val settings = mc.gameSettings
 
@@ -222,7 +231,7 @@ class WtapBot : Module() {
 
 
         if (combo <= 0) {
-            if (mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() + 1.0f) {
+            if (mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() + 1.5f) {
                 if (strafeLeft) {
                     settings.keyBindLeft.pressed = true
                     settings.keyBindRight.pressed = false
@@ -230,8 +239,7 @@ class WtapBot : Module() {
                     settings.keyBindLeft.pressed = false
                     settings.keyBindRight.pressed = true
                 }
-            }
-            else {
+            } else {
                 settings.keyBindLeft.pressed = false
                 settings.keyBindRight.pressed = false
             }
@@ -247,7 +255,7 @@ class WtapBot : Module() {
         val leftDown = Keyboard.isKeyDown(settings.keyBindLeft.keyCode)
         val rightDown = Keyboard.isKeyDown(settings.keyBindRight.keyCode)
 
-        if(rightDown) {
+        if (rightDown) {
             mc.gameSettings.keyBindRight.pressed = true
             mc.gameSettings.keyBindLeft.pressed = false
         }
@@ -273,8 +281,7 @@ class WtapBot : Module() {
         if (thisTarget == lastTarget && lastTarget != null) {
             if (counts > 0)
                 counts--
-        }
-        else {
+        } else {
             lastTarget = thisTarget
 
             reset()
@@ -282,29 +289,44 @@ class WtapBot : Module() {
 
         when (counts) {
             0 -> {
-                target = lastTarget
-                LiquidBounce.hud.addNotification(Notification("Target $lastTarget locked"))
+                target = thisTarget
+                LiquidBounce.hud.addNotification(Notification("Target ${lastTarget!!.name} locked"))
             }
 
             2 -> {
-                LiquidBounce.hud.addNotification(Notification("Click 2 more time to lock $lastTarget"))
+                LiquidBounce.hud.addNotification(Notification("Click 2 more time to lock ${lastTarget!!.name}"))
             }
 
-            else -> {}
+            else -> {
+            }
         }
     }
 
     private fun aim() {
+        if(backTraces.isEmpty())
+            backTraces.add(target!!.positionVector)
+
         backTraces[backTraces.size - 1] = target!!.positionVector
 
-        val index = floor(backTraces.size * (1 - clamp(mc.thePlayer.getDistanceToEntityBox(target!!) / reach.get() - 1, 0.01, 1.0))).toInt()
+        val index = floor(
+            backTraces.size * (1 - clamp(
+                mc.thePlayer.getDistanceToEntityBox(target!!) / reach.get() - 1,
+                0.01,
+                1.0
+            ))
+        ).toInt()
         val aimPos = backTraces[clamp(index, 0, backTraces.size - 1)]
 
         val xOffset = aimPos.xCoord - target!!.posX
         val yOffset = aimPos.yCoord - target!!.posY
         val zOffset = aimPos.zCoord - target!!.posZ
 
-        RotationUtils.searchCenter(target!!.entityBoundingBox.offset(xOffset, yOffset, zOffset).expand(-0.05,-0.05,-0.05), false,false, false, true,
+        RotationUtils.searchCenter(
+            target!!.entityBoundingBox.offset(xOffset, yOffset, zOffset).expand(-0.05, -0.05, -0.05),
+            false,
+            false,
+            false,
+            true,
             300F
         )
             .rotation.toPlayer(mc.thePlayer)
@@ -314,4 +336,7 @@ class WtapBot : Module() {
         if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong()))
             sTapTimer.reset()
     }
+
+    override val tag: String?
+        get() = if (target == null) "Idle" else target!!.name
 }

@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled;
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.event.EntityMovementEvent;
 import net.ccbluex.liquidbounce.features.special.AntiForge;
+import net.ccbluex.liquidbounce.features.special.ReplayRecording;
 import net.ccbluex.liquidbounce.utils.ClientUtils;
 import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.Minecraft;
@@ -16,15 +17,14 @@ import net.minecraft.client.gui.GuiDownloadTerrain;
 import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.PacketThreadUtil;
 import net.minecraft.network.play.client.C17PacketCustomPayload;
 import net.minecraft.network.play.client.C19PacketResourcePackStatus;
-import net.minecraft.network.play.server.S01PacketJoinGame;
-import net.minecraft.network.play.server.S14PacketEntity;
-import net.minecraft.network.play.server.S48PacketResourcePackSend;
+import net.minecraft.network.play.server.*;
 import net.minecraft.world.WorldSettings;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,6 +35,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
+import java.util.UUID;
 
 @Mixin(NetHandlerPlayClient.class)
 public abstract class MixinNetHandlerPlayClient {
@@ -51,6 +53,9 @@ public abstract class MixinNetHandlerPlayClient {
 
     @Shadow
     public int currentServerMaxPlayers;
+
+    @Shadow
+    private Map<UUID, NetworkPlayerInfo> playerInfoMap;
 
     @Inject(method = "handleResourcePack", at = @At("HEAD"), cancellable = true)
     private void handleResourcePack(final S48PacketResourcePackSend p_handleResourcePack_1_, final CallbackInfo callbackInfo) {
@@ -100,5 +105,27 @@ public abstract class MixinNetHandlerPlayClient {
 
         if(entity != null)
             LiquidBounce.eventManager.callEvent(new EntityMovementEvent(entity));
+    }
+
+    @Inject(method = "handlePlayerListItem", at = @At("HEAD"))
+    public void recordOwnJoin(S38PacketPlayerListItem packet, CallbackInfo callbackInfo) {
+        if (ReplayRecording.INSTANCE.getEnabled() && packet.getAction() == S38PacketPlayerListItem.Action.ADD_PLAYER) {
+            for (S38PacketPlayerListItem.AddPlayerData data : packet.getEntries()) {
+                if (data.getProfile() == null || data.getProfile().getId() == null) continue;
+                // Only add spawn packet for our own player and only if he isn't known yet
+                if (data.getProfile().getId().equals(Minecraft.getMinecraft().thePlayer.getGameProfile().getId())
+                        && !playerInfoMap.containsKey(data.getProfile().getId())) {
+                    ReplayRecording.INSTANCE.processServerPacket(ReplayRecording.INSTANCE.spawnPlayer(Minecraft.getMinecraft().thePlayer));
+                }
+            }
+        }
+
+    }
+
+    @Inject(method = "handleRespawn", at=@At("RETURN"))
+    public void recordOwnRespawn(S07PacketRespawn packet, CallbackInfo ci) {
+        if (ReplayRecording.INSTANCE.getEnabled()) {
+            ReplayRecording.INSTANCE.processServerPacket(ReplayRecording.INSTANCE.spawnPlayer(Minecraft.getMinecraft().thePlayer));
+        }
     }
 }
