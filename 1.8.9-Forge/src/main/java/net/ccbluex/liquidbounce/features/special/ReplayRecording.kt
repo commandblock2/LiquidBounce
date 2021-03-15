@@ -301,10 +301,12 @@ object ReplayRecording : Listenable, MinecraftInstance() {
             val timeStamp = now - startTime - timePassedWhilePaused
             lastSendPacket = timeStamp
 
-            //fuck u and die if anything goes wrong
-            packetOutputStream!!.writeInt(timeStamp.toInt())
-            packetOutputStream!!.writeInt(data!!.size)
-            packetOutputStream!!.write(data)
+            try {
+                packetOutputStream!!.writeInt(timeStamp.toInt())
+                packetOutputStream!!.writeInt(data!!.size)
+                packetOutputStream!!.write(data)
+            } catch (e :Exception) {
+            }
 
         }
     }
@@ -312,12 +314,17 @@ object ReplayRecording : Listenable, MinecraftInstance() {
     private fun saveMetaData() {
         val id = lastSavedMetaDataId.incrementAndGet()
         saveService!!.submit {
-            if (lastSavedMetaDataId.get() != id)
-                return@submit
+            try {
+                if (lastSavedMetaDataId.get() != id)
+                    return@submit
 
-            synchronized(replayFile!!) {
-                replayFile!!.writeMetaData(replayMetaData)
+                synchronized(replayFile!!) {
+                    replayFile!!.writeMetaData(replayMetaData)
+                }
+            } catch (e :Exception) {
+
             }
+
         }
     }
 

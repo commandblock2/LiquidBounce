@@ -7,6 +7,7 @@ package net.ccbluex.liquidbounce.injection.forge.mixins.item;
 
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura;
+import net.ccbluex.liquidbounce.features.module.modules.combat.WtapBot;
 import net.ccbluex.liquidbounce.features.module.modules.render.AntiBlind;
 import net.ccbluex.liquidbounce.features.module.modules.render.SwingAnimation;
 import net.minecraft.client.Minecraft;
@@ -98,11 +99,13 @@ public abstract class MixinItemRenderer {
 
         if(this.itemToRender != null) {
             final KillAura killAura = (KillAura) LiquidBounce.moduleManager.getModule(KillAura.class);
+            final WtapBot wtapBot = (WtapBot) LiquidBounce.moduleManager.getModule(WtapBot.class);
 
             if(this.itemToRender.getItem() instanceof net.minecraft.item.ItemMap) {
                 this.renderItemMap(abstractclientplayer, f2, f, f1);
-            } else if (abstractclientplayer.getItemInUseCount() > 0 || (itemToRender.getItem() instanceof ItemSword && killAura.getBlockingStatus())) {
-                EnumAction enumaction = killAura.getBlockingStatus() ? EnumAction.BLOCK : this.itemToRender.getItemUseAction();
+            } else if (abstractclientplayer.getItemInUseCount() > 0 || (itemToRender.getItem() instanceof ItemSword && (killAura.getBlockingStatus()
+                    || wtapBot.getBlocking()))) {
+                EnumAction enumaction = (killAura.getBlockingStatus() || wtapBot.getBlocking()) ? EnumAction.BLOCK : this.itemToRender.getItemUseAction();
 
                 switch(enumaction) {
                     case NONE:

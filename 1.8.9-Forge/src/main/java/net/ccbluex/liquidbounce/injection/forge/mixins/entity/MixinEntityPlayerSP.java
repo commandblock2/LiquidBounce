@@ -10,6 +10,7 @@ import net.ccbluex.liquidbounce.event.*;
 import net.ccbluex.liquidbounce.features.module.modules.annoyance.InsultAssistant;
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura;
 import net.ccbluex.liquidbounce.features.module.modules.combat.LegacyReachAura;
+import net.ccbluex.liquidbounce.features.module.modules.combat.WtapBot;
 import net.ccbluex.liquidbounce.features.module.modules.exploit.AntiHunger;
 import net.ccbluex.liquidbounce.features.module.modules.exploit.PortalMenu;
 import net.ccbluex.liquidbounce.features.module.modules.fun.Derp;
@@ -332,8 +333,10 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
 
         final NoSlow noSlow = (NoSlow) LiquidBounce.moduleManager.getModule(NoSlow.class);
         final KillAura killAura = (KillAura) LiquidBounce.moduleManager.getModule(KillAura.class);
+        final WtapBot wtapBot = (WtapBot) LiquidBounce.moduleManager.getModule(WtapBot.class);
 
-        if (getHeldItem() != null && (this.isUsingItem() || (getHeldItem().getItem() instanceof ItemSword && killAura.getBlockingStatus())) && !this.isRiding()) {
+        if (getHeldItem() != null && (this.isUsingItem() || (getHeldItem().getItem() instanceof ItemSword &&
+                (killAura.getBlockingStatus() || wtapBot.getBlocking()))) && !this.isRiding()) {
             final SlowDownEvent slowDownEvent = new SlowDownEvent(0.2F, 0.2F);
             LiquidBounce.eventManager.callEvent(slowDownEvent);
             this.movementInput.moveStrafe *= slowDownEvent.getStrafe();
