@@ -84,6 +84,7 @@ class WtapBot : Module() {
     private val adStrafeInterval = IntegerValue("ADStrafeInterval", 200, 0, 1000)
 
     private val doBlock = BoolValue("Block", true)
+    private val doInteractBlock = BoolValue("InteractBlock", false)
     private val blockIdleTimeout = IntegerValue("BlockIdleTimeout", 100, 0, 200)
     private val stopKey = TextValue("StopKey", "z")
 
@@ -329,7 +330,7 @@ class WtapBot : Module() {
         if (!blockIdleTimer.hasTimePassed(blockIdleTimeout.get().toLong()))
             return
 
-        val interact = mc.thePlayer.getDistanceToEntityBox(target!!) > reach.get()
+        val interact = mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() && doInteractBlock.get()
 
         if (interact) {
             val positionEye = mc.renderViewEntity.getPositionEyes(1F)
@@ -337,7 +338,7 @@ class WtapBot : Module() {
             val expandSize = target!!.collisionBorderSize.toDouble()
             val aABB = target!!.entityBoundingBox.expand(expandSize, expandSize, expandSize)
 
-            val (yaw,pitch) = RotationUtils.targetRotation ?: Rotation(mc.thePlayer.rotationYaw,mc.thePlayer.rotationPitch)
+            val (yaw,pitch) = Rotation(mc.thePlayer.rotationYaw,mc.thePlayer.rotationPitch)
             val yawCos = MathHelper.cos(-yaw * 0.017453292f - Math.PI.toFloat())
             val yawSin = MathHelper.sin(-yaw * 0.017453292f - Math.PI.toFloat())
             val pitchCos = -MathHelper.cos(-pitch * 0.017453292f)
@@ -356,6 +357,11 @@ class WtapBot : Module() {
                 hitVec.zCoord - target!!.posZ)
             )
             )
+
+            ClientUtils.displayChatMessage("${hitVec.xCoord - target!!.posX}")
+            ClientUtils.displayChatMessage("${hitVec.yCoord - target!!.posY}")
+            ClientUtils.displayChatMessage("${hitVec.zCoord - target!!.posZ}")
+
             mc.netHandler.addToSendQueue(C02PacketUseEntity(target!!, C02PacketUseEntity.Action.INTERACT))
         }
 
@@ -370,6 +376,9 @@ class WtapBot : Module() {
 
             blocking = false
             blockIdleTimer.reset()
+
+            leftLastSwing = System.currentTimeMillis()
+            leftDelay = TimeUtils.randomClickDelay(minCPSValue.get(), maxCPSValue.get())
         }
     }
 
