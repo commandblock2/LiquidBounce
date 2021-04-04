@@ -9,8 +9,8 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.thealtening.AltService;
-import com.thealtening.api.TheAltening;
-import com.thealtening.api.data.AccountData;
+/*import com.thealtening.api.TheAltening;
+import com.thealtening.api.data.AccountData;*/
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.event.SessionEvent;
 import net.ccbluex.liquidbounce.features.special.AntiForge;
@@ -69,7 +69,7 @@ public abstract class MixinGuiDisconnected extends MixinGuiScreen {
             case 1:
                 ServerUtils.connectToLastServer();
                 break;
-            case 3:
+/*            case 3:
                 if (!GuiTheAltening.Companion.getApiKey().isEmpty()) {
                     final String apiKey = GuiTheAltening.Companion.getApiKey();
                     final TheAltening theAltening = new TheAltening(apiKey);
@@ -99,6 +99,7 @@ public abstract class MixinGuiDisconnected extends MixinGuiScreen {
                 GuiAltManager.login(minecraftAccount);
                 ServerUtils.connectToLastServer();
                 break;
+                */
             case 4:
                 LoginUtils.loginCracked(RandomUtils.randomString(RandomUtils.nextInt(5, 16)));
                 ServerUtils.connectToLastServer();

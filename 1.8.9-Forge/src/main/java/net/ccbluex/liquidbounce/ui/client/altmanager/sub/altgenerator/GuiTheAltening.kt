@@ -10,7 +10,7 @@ import com.mojang.authlib.exceptions.AuthenticationException
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication
 import com.thealtening.AltService
-import com.thealtening.api.TheAltening
+//import com.thealtening.api.TheAltening
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.event.SessionEvent
 import net.ccbluex.liquidbounce.ui.client.altmanager.GuiAltManager
@@ -107,7 +107,7 @@ class GuiTheAltening(private val prevGui: GuiAltManager) : GuiScreen() {
 
         when (button.id) {
             0 -> mc.displayGuiScreen(prevGui)
-            1 -> {
+/*            1 -> {
                 loginButton.enabled = false
                 generateButton.enabled = false
                 apiKey = apiKeyField.text
@@ -164,7 +164,7 @@ class GuiTheAltening(private val prevGui: GuiAltManager) : GuiScreen() {
                     loginButton.enabled = true
                     generateButton.enabled = true
                 }
-            }
+            }*/
             2 -> {
                 loginButton.enabled = false
                 generateButton.enabled = false

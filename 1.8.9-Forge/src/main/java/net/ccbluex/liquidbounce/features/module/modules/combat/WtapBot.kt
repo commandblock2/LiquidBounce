@@ -358,10 +358,6 @@ class WtapBot : Module() {
             )
             )
 
-            ClientUtils.displayChatMessage("${hitVec.xCoord - target!!.posX}")
-            ClientUtils.displayChatMessage("${hitVec.yCoord - target!!.posY}")
-            ClientUtils.displayChatMessage("${hitVec.zCoord - target!!.posZ}")
-
             mc.netHandler.addToSendQueue(C02PacketUseEntity(target!!, C02PacketUseEntity.Action.INTERACT))
         }
 
