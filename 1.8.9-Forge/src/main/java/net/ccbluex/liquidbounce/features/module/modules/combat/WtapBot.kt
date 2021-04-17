@@ -147,8 +147,6 @@ class WtapBot : Module() {
             combo = 0
 
         aim()
-        setKeyStates()
-
     }
 
     @EventTarget
@@ -159,6 +157,8 @@ class WtapBot : Module() {
         if (backTraces.size > 10)
             backTraces.removeAt(0)
         backTraces.add(target!!.positionVector)
+
+        setKeyStates()
     }
 
     @EventTarget
