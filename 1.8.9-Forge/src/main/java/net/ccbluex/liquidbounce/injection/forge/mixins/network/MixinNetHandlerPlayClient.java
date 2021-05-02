@@ -113,7 +113,7 @@ public abstract class MixinNetHandlerPlayClient {
             for (S38PacketPlayerListItem.AddPlayerData data : packet.getEntries()) {
                 if (data.getProfile() == null || data.getProfile().getId() == null) continue;
                 // Only add spawn packet for our own player and only if he isn't known yet
-                if (data.getProfile().getId().equals(Minecraft.getMinecraft().thePlayer.getGameProfile().getId())
+                if (Minecraft.getMinecraft().thePlayer != null && data.getProfile().getId().equals(Minecraft.getMinecraft().thePlayer.getGameProfile().getId())
                         && !playerInfoMap.containsKey(data.getProfile().getId())) {
                     ReplayRecording.INSTANCE.processServerPacket(ReplayRecording.INSTANCE.spawnPlayer(Minecraft.getMinecraft().thePlayer));
                 }

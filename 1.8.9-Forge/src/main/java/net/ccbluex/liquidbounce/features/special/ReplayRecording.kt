@@ -8,6 +8,7 @@ import io.netty.buffer.Unpooled
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.event.*
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Notification
+import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.MinecraftInstance
 import net.minecraft.entity.DataWatcher
 import net.minecraft.entity.Entity
@@ -240,6 +241,10 @@ object ReplayRecording : Listenable, MinecraftInstance() {
         synchronized(replayFile!!) {
             replayFile!!.save()
             replayFile!!.close()
+
+            replayFile = null
+            saveService = null
+            packetOutputStream = null
         }
     }
 
@@ -306,6 +311,7 @@ object ReplayRecording : Listenable, MinecraftInstance() {
                 packetOutputStream!!.writeInt(data!!.size)
                 packetOutputStream!!.write(data)
             } catch (e :Exception) {
+                e.printStackTrace()
             }
 
         }
