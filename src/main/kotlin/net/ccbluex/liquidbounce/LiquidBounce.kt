@@ -27,8 +27,6 @@ import net.ccbluex.liquidbounce.features.misc.ProxyManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.tabs.Tabs
 import net.ccbluex.liquidbounce.render.engine.RenderEngine
-import net.ccbluex.liquidbounce.render.ultralight.UltralightEngine
-import net.ccbluex.liquidbounce.render.ultralight.theme.ThemeManager
 import net.ccbluex.liquidbounce.script.ScriptManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.block.ChunkScanner
@@ -84,7 +82,6 @@ object LiquidBounce : Listenable {
         // Features
         ModuleManager
         CommandManager
-        ThemeManager
         ScriptManager
         RotationManager
         FriendManager
@@ -95,8 +92,6 @@ object LiquidBounce : Listenable {
         // Initialize the render engine
         RenderEngine.init()
 
-        // Load up web platform
-        UltralightEngine.init()
 
         // Register commands and modules
         CommandManager.registerInbuilt()
@@ -120,7 +115,6 @@ object LiquidBounce : Listenable {
     val shutdownHandler = handler<ClientShutdownEvent> {
         logger.info("Shutting down client...")
         ConfigSystem.store()
-        UltralightEngine.shutdown()
 
         ChunkScanner.ChunkScannerThread.stopThread()
     }

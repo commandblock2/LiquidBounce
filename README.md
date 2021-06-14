@@ -1,3 +1,15 @@
+# LiquidBounce-Libre
+LiquidBounce-Libre is a fork of LiquidBounce that intends to only have FLOSS dependencies.
+
+## Replacing Ultralight
+Currently, ultralight is being used as the HTML renderer, however, neither is Ultralight or Sciter free (as in freedom).
+It is still a interesting thing to have webengine to draw the clickgui/hud, openjfx (with pannel) **might** solve this problem.
+This fork is currently de-ultralighted and will not have a clickgui/hud/splash screen until an alternative has been found. (In other words, it is very much possible
+that this fork will never have these features due to my laziness lmao, any help is appreciated)
+
+**Anything not related to this and could generally improve the client should be contributed to upstream.**
+
+# Original LiquidBounce README.md
 <div align="center">
 <p>
     <img width="200" src="https://raw.githubusercontent.com/CCBlueX/LiquidCloud/master/LiquidBounce/liquidbounceLogo.svg">
