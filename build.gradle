@@ -22,6 +22,12 @@ plugins {
     id "org.jetbrains.kotlin.jvm"
     id "com.github.johnrengelman.shadow" version "6.1.0"
     id "org.jlleitschuh.gradle.ktlint" version "10.1.0"
+    id "org.openjfx.javafxplugin" version "0.0.10"
+}
+
+javafx {
+    version = "11"
+    modules = [ 'javafx.web' ]
 }
 
 import net.fabricmc.loom.task.RemapJarTask
