@@ -24,6 +24,7 @@ import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.render.screen.EmptyScreen
+
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.regular
@@ -55,6 +56,9 @@ object CommandClient {
                     }
                     .build()
             )
+
+
+
 
             // todo: contributors
             // todo: links

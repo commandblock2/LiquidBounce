@@ -35,14 +35,20 @@ import net.minecraft.util.shape.VoxelShapes
 object ModuleAvoidHazards : Module("AvoidHazards", Category.MOVEMENT) {
 
     val cacti by boolean("Cacti", true)
+    val berryBush by boolean("BerryBush", true)
     val pressurePlates by boolean("PressurePlates", true)
     val fire by boolean("Fire", true)
     val magmaBlocks by boolean("MagmaBlocks", true)
+    val cobWebs by boolean("Cobwebs", true)
 
     val shapeHandler = handler<BlockShapeEvent> { event ->
         if (cacti && event.state.block is CactusBlock) {
             event.shape = VoxelShapes.fullCube()
-        } else if (fire && event.state.block is FireBlock) {
+        } else if (berryBush && event.state.block is SweetBerryBushBlock) {
+            event.shape = VoxelShapes.fullCube()
+        }else if (fire && event.state.block is FireBlock) {
+            event.shape = VoxelShapes.fullCube()
+        } else if (cobWebs && event.state.block is CobwebBlock) {
             event.shape = VoxelShapes.fullCube()
         } else if (pressurePlates && event.state.block is PressurePlateBlock) {
             event.shape = Block.createCuboidShape(0.0, 0.0, 0.0, 16.0, 4.0, 16.0)

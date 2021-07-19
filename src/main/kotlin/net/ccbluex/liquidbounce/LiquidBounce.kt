@@ -27,12 +27,14 @@ import net.ccbluex.liquidbounce.features.misc.ProxyManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.tabs.Tabs
 import net.ccbluex.liquidbounce.render.engine.RenderEngine
+
 import net.ccbluex.liquidbounce.script.ScriptManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.block.ChunkScanner
 import net.ccbluex.liquidbounce.utils.combat.globalEnemyConfigurable
 import net.ccbluex.liquidbounce.utils.mappings.McMappings
 import org.apache.logging.log4j.LogManager
+import kotlin.system.exitProcess
 
 /**
  * LiquidBounce
@@ -62,51 +64,60 @@ object LiquidBounce : Listenable {
      * Should be executed to start the client.
      */
     val startHandler = handler<ClientStartEvent> {
-        logger.info("Launching $CLIENT_NAME v$CLIENT_VERSION by $CLIENT_AUTHOR")
-        logger.debug("Loading from cloud: '$CLIENT_CLOUD'")
+        runCatching {
+            logger.info("Launching $CLIENT_NAME v$CLIENT_VERSION by $CLIENT_AUTHOR")
+            logger.debug("Loading from cloud: '$CLIENT_CLOUD'")
 
-        // Load mappings
-        McMappings.load()
+            // Load mappings
+            McMappings.load()
 
-        // Initialize client features
-        EventManager
+            // Initialize client features
+            EventManager
 
-        // Config
-        ConfigSystem
-        globalEnemyConfigurable
+            // Config
+            ConfigSystem
+            globalEnemyConfigurable
 
-        RotationManager
+            RotationManager
 
-        ChunkScanner
+            ChunkScanner
 
-        // Features
-        ModuleManager
-        CommandManager
-        ScriptManager
-        RotationManager
-        FriendManager
-        ProxyManager
-        Tabs
-        Chat
+            // Features
+            ModuleManager
+            CommandManager
 
-        // Initialize the render engine
-        RenderEngine.init()
+            ScriptManager
+            RotationManager
+            FriendManager
+            ProxyManager
+            Tabs
+            Chat
+
+            // Initialize the render engine
+            RenderEngine.init()
 
 
-        // Register commands and modules
-        CommandManager.registerInbuilt()
-        ModuleManager.registerInbuilt()
 
-        // Load user scripts
-        ScriptManager.loadScripts()
+            // Register commands and modules
+            CommandManager.registerInbuilt()
+            ModuleManager.registerInbuilt()
 
-        // Load config system from disk
-        ConfigSystem.load()
+            // Load user scripts
+            ScriptManager.loadScripts()
 
-        // Connect to chat server
-        Chat.connect()
+            // Load config system from disk
+            ConfigSystem.load()
 
-        logger.info("Successfully loaded client!")
+            // Connect to chat server
+            Chat.connect()
+
+
+        }.onSuccess {
+            logger.info("Successfully loaded client!")
+        }.onFailure {
+            logger.error("Unable to load client.", it)
+            exitProcess(1)
+        }
     }
 
     /**
@@ -115,6 +126,7 @@ object LiquidBounce : Listenable {
     val shutdownHandler = handler<ClientShutdownEvent> {
         logger.info("Shutting down client...")
         ConfigSystem.store()
+
 
         ChunkScanner.ChunkScannerThread.stopThread()
     }

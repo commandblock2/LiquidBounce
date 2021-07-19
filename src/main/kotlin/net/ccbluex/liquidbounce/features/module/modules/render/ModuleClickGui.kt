@@ -23,9 +23,13 @@ import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.Module
 import net.ccbluex.liquidbounce.render.screen.EmptyScreen
 
+
 object ModuleClickGui : Module("ClickGUI", Category.RENDER, disableActivation = true) {
 
     override fun enable() {
+
+
+
 
     }
 
