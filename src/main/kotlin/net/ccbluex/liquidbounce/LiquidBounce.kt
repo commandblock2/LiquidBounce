@@ -109,7 +109,7 @@ object LiquidBounce : Listenable {
             ConfigSystem.load()
 
             // Connect to chat server
-            Chat.connect()
+            //Chat.connect()
 
 
         }.onSuccess {
