@@ -4,6 +4,7 @@ import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.features.command.CommandManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
+import net.ccbluex.liquidbounce.render.fxweb.theme.ThemeManager
 import net.ccbluex.liquidbounce.script.ScriptManager
 
 object JsClient {
@@ -13,6 +14,7 @@ object JsClient {
 
     val moduleManager = ModuleManager
     val commandManager = CommandManager
+    val themeManager = ThemeManager
     val scriptManager = ScriptManager
 
 }

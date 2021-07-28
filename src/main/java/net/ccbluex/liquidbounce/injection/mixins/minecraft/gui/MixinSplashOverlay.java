@@ -20,6 +20,11 @@
 package net.ccbluex.liquidbounce.injection.mixins.minecraft.gui;
 
 
+import net.ccbluex.liquidbounce.render.fxweb.FxEngine;
+import net.ccbluex.liquidbounce.render.fxweb.RenderLayer;
+import net.ccbluex.liquidbounce.render.fxweb.View;
+import net.ccbluex.liquidbounce.render.fxweb.theme.Page;
+import net.ccbluex.liquidbounce.render.fxweb.theme.ThemeManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.SplashOverlay;
 import net.minecraft.client.util.math.MatrixStack;
@@ -42,21 +47,36 @@ public class MixinSplashOverlay {
     @Shadow @Final private ResourceReload reload;
 
 
+    private View view = null;
     private boolean closing = false;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void hookSplashInit(CallbackInfo callbackInfo) {
+        final Page page = ThemeManager.INSTANCE.page("splashscreen");
+        if (page == null)
+            return;
 
+        view = FxEngine.INSTANCE.newSplashView();
+        view.loadPage(page);
     }
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void hookSplashRender(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo callbackInfo) {
+        if (view != null) {
+            if (this.reload.isComplete()) {
+                if (this.client.currentScreen != null) {
+                    this.client.currentScreen.render(matrices, 0, 0, delta);
+                }
 
+                if (!closing) {
+                    closing = true;
+                        FxEngine.INSTANCE.removeView(view);
+                        this.client.setOverlay(null);
+                }
+            }
 
-
-
-
-
+            //FxEngine.INSTANCE.render(RenderLayer.SPLASH_LAYER, matrices);
+            callbackInfo.cancel();
+        }
     }
-
 }

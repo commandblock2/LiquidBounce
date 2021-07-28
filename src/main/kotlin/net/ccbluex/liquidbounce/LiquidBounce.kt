@@ -27,6 +27,8 @@ import net.ccbluex.liquidbounce.features.misc.ProxyManager
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.tabs.Tabs
 import net.ccbluex.liquidbounce.render.engine.RenderEngine
+import net.ccbluex.liquidbounce.render.fxweb.FxEngine
+import net.ccbluex.liquidbounce.render.fxweb.theme.ThemeManager
 
 import net.ccbluex.liquidbounce.script.ScriptManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
@@ -85,7 +87,7 @@ object LiquidBounce : Listenable {
             // Features
             ModuleManager
             CommandManager
-
+            ThemeManager
             ScriptManager
             RotationManager
             FriendManager
@@ -96,7 +98,7 @@ object LiquidBounce : Listenable {
             // Initialize the render engine
             RenderEngine.init()
 
-
+            FxEngine.init()
 
             // Register commands and modules
             CommandManager.registerInbuilt()
