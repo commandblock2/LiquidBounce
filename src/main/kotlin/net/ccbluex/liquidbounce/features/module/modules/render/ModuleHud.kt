@@ -24,8 +24,9 @@ import net.ccbluex.liquidbounce.features.module.Module
 /**
  * Module HUD
  *
- * The client in-game dashboard
+ * The client in-game dashboard.
  */
+
 object ModuleHud : Module("HUD", Category.RENDER, state = true, hide = true) {
     override val translationBaseKey: String
         get() = "liquidbounce.module.hud"

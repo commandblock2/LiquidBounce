@@ -24,6 +24,12 @@ import net.ccbluex.liquidbounce.features.module.Module
 import net.ccbluex.liquidbounce.render.screen.EmptyScreen
 
 
+/**
+ * ClickGUI module
+ *
+ * Shows you an easy-to-use menu to toggle and configure modules.
+ */
+
 object ModuleClickGui : Module("ClickGUI", Category.RENDER, disableActivation = true) {
 
     override fun enable() {
