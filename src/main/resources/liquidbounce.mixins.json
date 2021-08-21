@@ -11,6 +11,7 @@
     "minecraft.block.MixinCobwebBlock",
     "minecraft.block.MixinFluidBlock",
     "minecraft.block.MixinSnowBlock",
+    "minecraft.client.render.MixinCamera",
     "minecraft.client.MixinClientWorld",
     "minecraft.client.MixinInput",
     "minecraft.client.MixinKeyboard",
