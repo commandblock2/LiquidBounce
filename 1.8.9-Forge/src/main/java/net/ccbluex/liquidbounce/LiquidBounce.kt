@@ -33,6 +33,7 @@ import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.InventoryUtils
 import net.ccbluex.liquidbounce.utils.RotationUtils
 import net.ccbluex.liquidbounce.utils.misc.HttpUtils
+import net.commandblock2.liquidbounce.expr.Experimental
 import net.minecraft.util.ResourceLocation
 
 object LiquidBounce {
@@ -67,6 +68,7 @@ object LiquidBounce {
 
     // Discord RPC
     private lateinit var clientRichPresence: ClientRichPresence
+    lateinit var exprimental: Experimental
 
     /**
      * Execute if client will be started
@@ -170,6 +172,8 @@ object LiquidBounce {
 
         // Load generators
         GuiAltManager.loadGenerators()
+
+        exprimental = Experimental()
 
         // Set is starting status
         isStarting = false

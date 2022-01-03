@@ -16,5 +16,6 @@ enum class ModuleCategory(val displayName: String) {
     EXPLOIT("Exploit"),
     FUN("Fun"),
     ANNOYANCE("Annoyance"),
+    EXPERIMENTAL("Experimental"),
 
 }

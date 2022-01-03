@@ -28,7 +28,7 @@ import java.awt.*;
 
 @ModuleInfo(name = "ClickGUI", description = "Opens the ClickGUI.", category = ModuleCategory.RENDER, keyBind = Keyboard.KEY_RSHIFT, canEnable = false)
 public class ClickGUI extends Module {
-    private final ListValue styleValue = new ListValue("Style", new String[] {"LiquidBounce", "Null", "Slowly"}, "Slowly") {
+    private final ListValue styleValue = new ListValue("Style", new String[] {"LiquidBounce"/*, "Null", "Slowly"*/}, "LiquidBounce") {
         @Override
         protected void onChanged(final String oldValue, final String newValue) {
             updateStyle();
