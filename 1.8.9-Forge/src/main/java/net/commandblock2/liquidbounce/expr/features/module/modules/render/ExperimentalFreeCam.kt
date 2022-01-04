@@ -20,8 +20,8 @@ class ExperimentalFreeCam : Module() {
     private val speedValue = FloatValue("Speed", .8F, .1F, 2F)
 
     var pos: Vec3? = null
-        get() = pos
-    private set
+        get() = field ?: mc.thePlayer.positionVector
+        private set
 
     var lastTickPos: Vec3? = null
 
@@ -79,7 +79,7 @@ class ExperimentalFreeCam : Module() {
 
     fun offset(float: Float): Vec3 {
         return mc.thePlayer.positionVector
-            .subtract(pos ?: mc.thePlayer.positionVector)
+            .subtract(pos)
             .add(pos?.subtract(lastTickPos ?: pos)?.multiply(1 - float))
     }
 }
