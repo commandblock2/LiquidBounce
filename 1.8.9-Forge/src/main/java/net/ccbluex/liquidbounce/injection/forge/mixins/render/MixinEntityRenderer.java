@@ -12,6 +12,7 @@ import net.ccbluex.liquidbounce.features.module.modules.player.Reach;
 import net.ccbluex.liquidbounce.features.module.modules.render.CameraClip;
 import net.ccbluex.liquidbounce.features.module.modules.render.NoHurtCam;
 import net.ccbluex.liquidbounce.features.module.modules.render.Tracers;
+import net.commandblock2.liquidbounce.expr.features.module.modules.render.ExperimentalFreeCam;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -79,11 +80,11 @@ public abstract class MixinEntityRenderer {
             Entity entity = this.mc.getRenderViewEntity();
             float f = entity.getEyeHeight();
 
-            if(entity instanceof EntityLivingBase && ((EntityLivingBase) entity).isPlayerSleeping()) {
+            if (entity instanceof EntityLivingBase && ((EntityLivingBase) entity).isPlayerSleeping()) {
                 f = (float) ((double) f + 1D);
                 GlStateManager.translate(0F, 0.3F, 0.0F);
 
-                if(!this.mc.gameSettings.debugCamEnable) {
+                if (!this.mc.gameSettings.debugCamEnable) {
                     BlockPos blockpos = new BlockPos(entity);
                     IBlockState iblockstate = this.mc.theWorld.getBlockState(blockpos);
                     net.minecraftforge.client.ForgeHooksClient.orientBedCamera(this.mc.theWorld, blockpos, iblockstate, entity);
@@ -91,19 +92,20 @@ public abstract class MixinEntityRenderer {
                     GlStateManager.rotate(entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partialTicks + 180.0F, 0.0F, -1.0F, 0.0F);
                     GlStateManager.rotate(entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks, -1.0F, 0.0F, 0.0F);
                 }
-            }else if(this.mc.gameSettings.thirdPersonView > 0) {
+            }
+            else if (this.mc.gameSettings.thirdPersonView > 0) {
                 double d3 = (double) (this.thirdPersonDistanceTemp + (this.thirdPersonDistance - this.thirdPersonDistanceTemp) * partialTicks);
 
-                if(this.mc.gameSettings.debugCamEnable) {
+                if (this.mc.gameSettings.debugCamEnable) {
                     GlStateManager.translate(0.0F, 0.0F, (float) (-d3));
-                }else{
+                } else {
                     float f1 = entity.rotationYaw;
                     float f2 = entity.rotationPitch;
 
-                    if(this.mc.gameSettings.thirdPersonView == 2)
+                    if (this.mc.gameSettings.thirdPersonView == 2)
                         f2 += 180.0F;
 
-                    if(this.mc.gameSettings.thirdPersonView == 2)
+                    if (this.mc.gameSettings.thirdPersonView == 2)
                         GlStateManager.rotate(180.0F, 0.0F, 1.0F, 0.0F);
 
                     GlStateManager.rotate(entity.rotationPitch - f2, 1.0F, 0.0F, 0.0F);
@@ -112,14 +114,15 @@ public abstract class MixinEntityRenderer {
                     GlStateManager.rotate(f1 - entity.rotationYaw, 0.0F, 1.0F, 0.0F);
                     GlStateManager.rotate(f2 - entity.rotationPitch, 1.0F, 0.0F, 0.0F);
                 }
-            }else
+            }
+            else
                 GlStateManager.translate(0.0F, 0.0F, -0.1F);
 
-            if(!this.mc.gameSettings.debugCamEnable) {
+            if (!this.mc.gameSettings.debugCamEnable) {
                 float yaw = entity.prevRotationYaw + (entity.rotationYaw - entity.prevRotationYaw) * partialTicks + 180.0F;
                 float pitch = entity.prevRotationPitch + (entity.rotationPitch - entity.prevRotationPitch) * partialTicks;
                 float roll = 0.0F;
-                if(entity instanceof EntityAnimal) {
+                if (entity instanceof EntityAnimal) {
                     EntityAnimal entityanimal = (EntityAnimal) entity;
                     yaw = entityanimal.prevRotationYawHead + (entityanimal.rotationYawHead - entityanimal.prevRotationYawHead) * partialTicks + 180.0F;
                 }
@@ -140,6 +143,16 @@ public abstract class MixinEntityRenderer {
         }
     }
 
+    @Inject(method = "setupCameraTransform", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;orientCamera(F)V", shift = At.Shift.AFTER))
+    private void setUpCameraOffset(float partialTicks, int pass, final CallbackInfo callbackInfo) {
+        final ExperimentalFreeCam experimentalFreeCam = (ExperimentalFreeCam) LiquidBounce.moduleManager.getModule(ExperimentalFreeCam.class);
+
+        if (experimentalFreeCam.getState() && mc.thePlayer != null) {
+            final Vec3 pos = experimentalFreeCam.offset(partialTicks);
+            GlStateManager.translate(pos.xCoord, pos.yCoord, pos.zCoord);
+        }
+    }
+
     @Inject(method = "setupCameraTransform", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;setupViewBobbing(F)V", shift = At.Shift.BEFORE))
     private void setupCameraViewBobbingBefore(final CallbackInfo callbackInfo) {
         if (LiquidBounce.moduleManager.getModule(Tracers.class).getState()) GL11.glPushMatrix();
@@ -156,7 +169,7 @@ public abstract class MixinEntityRenderer {
     @Overwrite
     public void getMouseOver(float p_getMouseOver_1_) {
         Entity entity = this.mc.getRenderViewEntity();
-        if(entity != null && this.mc.theWorld != null) {
+        if (entity != null && this.mc.theWorld != null) {
             this.mc.mcProfiler.startSection("pick");
             this.mc.pointedEntity = null;
 
@@ -167,23 +180,23 @@ public abstract class MixinEntityRenderer {
             double d1 = d0;
             Vec3 vec3 = entity.getPositionEyes(p_getMouseOver_1_);
             boolean flag = false;
-            if(this.mc.playerController.extendedReach()) {
+            if (this.mc.playerController.extendedReach()) {
                 d0 = 6.0D;
                 d1 = 6.0D;
-            }else if(d0 > 3.0D) {
+            } else if (d0 > 3.0D) {
                 flag = true;
             }
 
-            if(this.mc.objectMouseOver != null) {
+            if (this.mc.objectMouseOver != null) {
                 d1 = this.mc.objectMouseOver.hitVec.distanceTo(vec3);
             }
 
-            if(reach.getState()) {
+            if (reach.getState()) {
                 d1 = reach.getCombatReachValue().get();
 
                 final MovingObjectPosition movingObjectPosition = entity.rayTrace(d1, p_getMouseOver_1_);
 
-                if(movingObjectPosition != null) d1 = movingObjectPosition.hitVec.distanceTo(vec3);
+                if (movingObjectPosition != null) d1 = movingObjectPosition.hitVec.distanceTo(vec3);
             }
 
             Vec3 vec31 = entity.getLook(p_getMouseOver_1_);
@@ -194,26 +207,26 @@ public abstract class MixinEntityRenderer {
             List<Entity> list = this.mc.theWorld.getEntitiesInAABBexcluding(entity, entity.getEntityBoundingBox().addCoord(vec31.xCoord * d0, vec31.yCoord * d0, vec31.zCoord * d0).expand((double) f, (double) f, (double) f), Predicates.and(EntitySelectors.NOT_SPECTATING, p_apply_1_ -> p_apply_1_.canBeCollidedWith()));
             double d2 = d1;
 
-            for(int j = 0; j < list.size(); ++j) {
+            for (int j = 0; j < list.size(); ++j) {
                 Entity entity1 = (Entity) list.get(j);
                 float f1 = entity1.getCollisionBorderSize();
                 AxisAlignedBB axisalignedbb = entity1.getEntityBoundingBox().expand((double) f1, (double) f1, (double) f1);
                 MovingObjectPosition movingobjectposition = axisalignedbb.calculateIntercept(vec3, vec32);
-                if(axisalignedbb.isVecInside(vec3)) {
-                    if(d2 >= 0.0D) {
+                if (axisalignedbb.isVecInside(vec3)) {
+                    if (d2 >= 0.0D) {
                         this.pointedEntity = entity1;
                         vec33 = movingobjectposition == null ? vec3 : movingobjectposition.hitVec;
                         d2 = 0.0D;
                     }
-                }else if(movingobjectposition != null) {
+                } else if (movingobjectposition != null) {
                     double d3 = vec3.distanceTo(movingobjectposition.hitVec);
-                    if(d3 < d2 || d2 == 0.0D) {
-                        if(entity1 == entity.ridingEntity && !entity.canRiderInteract()) {
-                            if(d2 == 0.0D) {
+                    if (d3 < d2 || d2 == 0.0D) {
+                        if (entity1 == entity.ridingEntity && !entity.canRiderInteract()) {
+                            if (d2 == 0.0D) {
                                 this.pointedEntity = entity1;
                                 vec33 = movingobjectposition.hitVec;
                             }
-                        }else{
+                        } else {
                             this.pointedEntity = entity1;
                             vec33 = movingobjectposition.hitVec;
                             d2 = d3;
@@ -227,9 +240,9 @@ public abstract class MixinEntityRenderer {
                 this.mc.objectMouseOver = new MovingObjectPosition(MovingObjectPosition.MovingObjectType.MISS, vec33, (EnumFacing) null, new BlockPos(vec33));
             }
 
-            if(this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
+            if (this.pointedEntity != null && (d2 < d1 || this.mc.objectMouseOver == null)) {
                 this.mc.objectMouseOver = new MovingObjectPosition(this.pointedEntity, vec33);
-                if(this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
+                if (this.pointedEntity instanceof EntityLivingBase || this.pointedEntity instanceof EntityItemFrame) {
                     this.mc.pointedEntity = this.pointedEntity;
                 }
             }

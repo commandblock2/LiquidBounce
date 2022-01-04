@@ -23,6 +23,7 @@ import net.ccbluex.liquidbounce.features.module.modules.world.Timer
 import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.Insult
 import net.commandblock2.liquidbounce.expr.features.module.modules.combat.ExperimentalAura
+import net.commandblock2.liquidbounce.expr.features.module.modules.render.ExperimentalFreeCam
 import java.util.*
 
 
@@ -187,7 +188,8 @@ class ModuleManager : Listenable {
             VanillaAura::class.java,
             ArrowDodge::class.java,
             WtapBot::class.java,
-            ExperimentalAura::class.java
+            ExperimentalAura::class.java,
+            ExperimentalFreeCam::class.java
         )
 
         registerModule(NoScoreboard)
