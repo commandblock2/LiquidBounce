@@ -43,18 +43,28 @@ class ExperimentalFreeCam : Module() {
 
         val rotation = Rotation(mc.thePlayer.rotationYaw, 0F)
 
-        var offset = Vec3(.0,.0,.0)
+        var offset = Vec3(.0, .0, .0)
+
         if (GameSettings.isKeyDown(mc.gameSettings.keyBindForward))
             offset = offset.add(RotationUtils.getVectorForRotation(rotation))
+
         if (GameSettings.isKeyDown(mc.gameSettings.keyBindBack))
-            offset = offset.add(RotationUtils.getVectorForRotation(rotation)
-                .rotateYaw((Math.PI).toFloat()))
+            offset = offset.add(
+                RotationUtils.getVectorForRotation(rotation)
+                    .rotateYaw((Math.PI).toFloat())
+            )
+
         if (GameSettings.isKeyDown(mc.gameSettings.keyBindLeft))
-            offset = offset.add(RotationUtils.getVectorForRotation(rotation)
-                .rotateYaw((Math.PI / 2).toFloat()))
+            offset = offset.add(
+                RotationUtils.getVectorForRotation(rotation)
+                    .rotateYaw((Math.PI / 2).toFloat())
+            )
+
         if (GameSettings.isKeyDown(mc.gameSettings.keyBindRight))
-            offset = offset.add(RotationUtils.getVectorForRotation(rotation)
-                .rotateYaw((Math.PI / -2).toFloat()))
+            offset = offset.add(
+                RotationUtils.getVectorForRotation(rotation)
+                    .rotateYaw((Math.PI / -2).toFloat())
+            )
 
         if (GameSettings.isKeyDown(mc.gameSettings.keyBindJump))
             offset = offset.addVector(.0, speedValue.get().toDouble(), .0)
@@ -77,9 +87,19 @@ class ExperimentalFreeCam : Module() {
         mc.gameSettings.keyBindSneak.pressed = GameSettings.isKeyDown(mc.gameSettings.keyBindSprint)
     }
 
-    fun offset(float: Float): Vec3 {
+    fun offset(partialTick: Float): Vec3 {
         return mc.thePlayer.positionVector
             .subtract(pos)
-            .add(pos?.subtract(lastTickPos ?: pos)?.multiply(1 - float))
+            .add(
+                pos?.subtract(lastTickPos ?: pos)
+                    ?.multiply(1 - partialTick)
+            )
+            .subtract(
+                mc.thePlayer.positionVector.subtract(
+                    mc.thePlayer.prevPosX,
+                    mc.thePlayer.prevPosY,
+                    mc.thePlayer.prevPosZ
+                ).multiply(1 - partialTick)
+            )
     }
 }
