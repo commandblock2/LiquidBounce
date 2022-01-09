@@ -58,6 +58,7 @@
     "resources.MixinSkinManager",
     "world.MixinChunk",
     "world.MixinWorld",
-    "world.MixinWorldClient"
+    "world.MixinWorldClient",
+    "client.renderer.MixinRenderGlobal"
   ]
 }
