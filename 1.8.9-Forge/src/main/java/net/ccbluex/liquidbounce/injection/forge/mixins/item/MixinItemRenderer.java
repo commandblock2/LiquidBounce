@@ -7,9 +7,9 @@ package net.ccbluex.liquidbounce.injection.forge.mixins.item;
 
 import net.ccbluex.liquidbounce.LiquidBounce;
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura;
-import net.ccbluex.liquidbounce.features.module.modules.combat.WtapBot;
 import net.ccbluex.liquidbounce.features.module.modules.render.AntiBlind;
 import net.ccbluex.liquidbounce.features.module.modules.render.SwingAnimation;
+import net.commandblock2.liquidbounce.expr.features.module.modules.combat.WtapBot;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.entity.EntityPlayerSP;

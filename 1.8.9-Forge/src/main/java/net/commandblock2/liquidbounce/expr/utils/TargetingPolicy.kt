@@ -19,39 +19,68 @@ class TargetingPolicy : MinecraftInstance() {
 
     public var customSelector: CustomTargetSelector? = null
 
-    public var customPriority: PriorityFunc? = null
+    public var customPriority: Comparator<EntityLivingBase>? = null
     public var priority: Priority? = null
 
 
-    enum class Priority(val displayName: String, val rule: PriorityFunc?) {
-        HEALTH("Health", { lhs, rhs -> lhs.health < rhs.health }),
+    private var listOfTargets: List<EntityLivingBase>? = null
+        get() = field ?: updateTargets()
+
+    private var visitedTargets = emptyList<EntityLivingBase>()
+
+    public fun nextTarget(): EntityLivingBase? {
+        updateTargets()
+
+        val filtered = listOfTargets!!.filter { it !in visitedTargets }
+        val target = if (filtered.isEmpty()) {
+            visitedTargets = emptyList()
+
+            if (listOfTargets!!.isEmpty())
+                null
+            else
+                listOfTargets!!.first()
+
+        } else
+            filtered.first()
+
+        return target
+    }
+
+    private fun updateTargets(): List<EntityLivingBase>? {
+        listOfTargets = getLoadedEntityLivingBase()
+            .asSequence()
+            .filter(customSelector ?: {
+
+                (targetInvisible || !it.isInvisible)
+                        && (targetPlayer || it !is EntityPlayer)
+                        && (targetMobs || !isMob(it))
+                        && (targetAnimals || !isAnimal(it))
+                        && (targetDead || it.isEntityAlive)
+
+            })
+            .sortedWith(customPriority ?: (priority?: Priority.HURTTIME).rule)
+            .toList()
+
+        return listOfTargets
+    }
+
+
+    enum class Priority(val displayName: String, val rule: Comparator<EntityLivingBase>) {
+        HEALTH("Health", compareBy { it.health }),
         DISTANCE(
             "DistanceToPlayer",
-            { lhs, rhs -> mc.thePlayer.getDistanceToEntityBox(lhs) < mc.thePlayer.getDistanceToEntityBox(rhs) }),
+            compareBy { mc.thePlayer.getDistanceToEntityBox(it) }),
         DIRECTION(
             "Direction",
-            { lhs, rhs ->
-                getRotationDifference(lhs) < getRotationDifference(rhs)
-            }),
+            compareBy { getRotationDifference(it) }),
         LIVINGTIME(
             "LivingTime",
-            { lhs, rhs -> lhs.ticksExisted > rhs.ticksExisted }
+            compareByDescending { it.ticksExisted }
         ),
         HURTTIME(
             "HurtTime",
-            { lhs, rhs -> lhs.hurtResistantTime < rhs.hurtResistantTime }
+            compareBy { it.hurtResistantTime }
         )
-    }
-
-    public fun getTargets(): List<EntityLivingBase> {
-        return getLoadedEntityLivingBase()
-            .asSequence()
-            .filter { targetInvisible || !it.isInvisible }
-            .filter { targetPlayer || it !is EntityPlayer }
-            .filter { targetMobs || !isMob(it) }
-            .filter { targetAnimals || !isAnimal(it) }
-            .filter { targetDead || it.isEntityAlive }
-            .toList()
     }
 
     fun getLoadedEntityLivingBase(): List<EntityLivingBase> {
@@ -92,7 +121,7 @@ class TargetingPolicy : MinecraftInstance() {
             return this
         }
 
-        fun customPriority(customPriority: PriorityFunc?): PolicyBuilder {
+        fun customPriority(customPriority: Comparator<EntityLivingBase>?): PolicyBuilder {
             targetingPolicy.customPriority = customPriority
             return this
         }
@@ -106,5 +135,4 @@ class TargetingPolicy : MinecraftInstance() {
 
 }
 
-typealias PriorityFunc = (EntityLivingBase, EntityLivingBase) -> Boolean
 typealias CustomTargetSelector = ((entity: Entity) -> Boolean)

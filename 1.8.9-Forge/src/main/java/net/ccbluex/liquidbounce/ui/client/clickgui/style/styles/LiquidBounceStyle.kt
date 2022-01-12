@@ -17,6 +17,7 @@ import net.ccbluex.liquidbounce.ui.font.GameFontRenderer
 import net.ccbluex.liquidbounce.utils.block.BlockUtils.getBlockName
 import net.ccbluex.liquidbounce.utils.render.RenderUtils
 import net.ccbluex.liquidbounce.value.*
+import net.commandblock2.liquidbounce.expr.utils.TargetingPolicy
 import net.commandblock2.liquidbounce.expr.value.TargetValue
 import net.minecraft.client.audio.PositionedSoundRecord
 import net.minecraft.client.renderer.GlStateManager
@@ -238,7 +239,7 @@ class LiquidBounceStyle : Style() {
                             }
                         }
                         is FloatValue -> {
-                            val text = value.name + "§f: §c" + value.get().roundToInt()
+                            val text = value.name + "§f: §c" + value.get()
                             val textWidth = Fonts.font35.getStringWidth(text).toFloat()
                             if (moduleElement.settingsWidth < textWidth + 8) moduleElement.settingsWidth = textWidth + 8
                             RenderUtils.drawRect(
@@ -460,7 +461,7 @@ class LiquidBounceStyle : Style() {
                                 yPos + 4,
                                 0xffffff
                             )
-                            yPos += 14
+                            yPos += 12
 
                             GlStateManager.resetColor()
 
@@ -509,6 +510,71 @@ class LiquidBounceStyle : Style() {
 
                                     yPos += 12
                                 }
+
+
+                            val wtf = "TargetMode"
+                            val wtfwidth = Fonts.font35.getStringWidth(wtf).toFloat()
+                            if (moduleElement.settingsWidth < width + 16) moduleElement.settingsWidth =
+                                wtfwidth + 16
+                            RenderUtils.drawRect(
+                                (moduleElement.x + moduleElement.width + 4).toFloat(),
+                                (yPos + 2).toFloat(),
+                                moduleElement.x + moduleElement.width + moduleElement.settingsWidth,
+                                (yPos + 14).toFloat(),
+                                Int.MIN_VALUE
+                            )
+                            GlStateManager.resetColor()
+                            Fonts.font35.drawString(
+                                "§c$wtf",
+                                moduleElement.x + moduleElement.width + 6,
+                                yPos + 4,
+                                0xffffff
+                            )
+                            yPos += 12
+
+                            GlStateManager.resetColor()
+
+                            TargetingPolicy.Priority.values()
+                                .forEach {
+
+                                    val textWidth2 = Fonts.font35.getStringWidth(">${it.name}").toFloat()
+                                    if (moduleElement.settingsWidth < textWidth2 + 8) moduleElement.settingsWidth =
+                                        textWidth2 + 8
+
+                                    RenderUtils.drawRect(
+                                        (moduleElement.x + moduleElement.width + 4).toFloat(),
+                                        (yPos + 2).toFloat(),
+                                        moduleElement.x + moduleElement.width + moduleElement.settingsWidth,
+                                        (yPos + 14).toFloat(),
+                                        Int.MIN_VALUE
+                                    )
+
+                                    if (mouseX >= moduleElement.x + moduleElement.width + 4 && mouseX <= moduleElement.x + moduleElement.width + moduleElement.settingsWidth && mouseY >= yPos + 2 && mouseY <= yPos + 14) {
+                                        if (Mouse.isButtonDown(0) && moduleElement.isntPressed()) {
+                                            value.get().priority = it
+                                            mc.soundHandler.playSound(
+                                                PositionedSoundRecord.create(
+                                                    ResourceLocation("gui.button.press"),
+                                                    1.0f
+                                                )
+                                            )
+                                        }
+                                    }
+
+                                    GlStateManager.resetColor()
+
+                                    Fonts.font35.drawString(
+                                        it.name,
+                                        moduleElement.x + moduleElement.width + 14,
+                                        yPos + 4,
+                                        if (it.name == value.get().priority?.name)
+                                            guiColor
+                                        else Int.MAX_VALUE
+                                    )
+
+                                    yPos += 12
+                                }
+
                         }
                         else -> {
                             val text = value.name + "§f: §c" + value.get()

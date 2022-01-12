@@ -11,6 +11,8 @@ import java.util.function.Consumer
 
 open class TargetValue(name: String, value: TargetingPolicy) : Value<TargetingPolicy>(name, value) {
 
+    constructor(name: String) : this(name, TargetingPolicy())
+
     enum class InheritFrom {
         GLOBAL,
         CATEGORY,
