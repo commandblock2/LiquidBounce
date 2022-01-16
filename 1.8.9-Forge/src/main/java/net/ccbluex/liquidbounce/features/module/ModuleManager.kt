@@ -23,6 +23,7 @@ import net.ccbluex.liquidbounce.features.module.modules.world.Timer
 import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.Insult
 import net.commandblock2.liquidbounce.expr.features.module.modules.combat.ExperimentalAura
+import net.commandblock2.liquidbounce.expr.features.module.modules.combat.ExperimentalAutoSoup
 import net.commandblock2.liquidbounce.expr.features.module.modules.combat.WtapBot
 import net.commandblock2.liquidbounce.expr.features.module.modules.player.ExperimentalScaffold
 import net.commandblock2.liquidbounce.expr.features.module.modules.render.ExperimentalFreeCam
@@ -192,7 +193,8 @@ class ModuleManager : Listenable {
             WtapBot::class.java,
             ExperimentalAura::class.java,
             ExperimentalFreeCam::class.java,
-            ExperimentalScaffold::class.java
+            ExperimentalScaffold::class.java,
+            ExperimentalAutoSoup::class.java
         )
 
         registerModule(NoScoreboard)

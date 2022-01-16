@@ -9,8 +9,9 @@ import net.ccbluex.liquidbounce.features.module.Module
 import net.ccbluex.liquidbounce.features.module.ModuleCategory
 import net.ccbluex.liquidbounce.features.module.ModuleInfo
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura
+import net.ccbluex.liquidbounce.script.api.global.Chat
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Notification
-import net.ccbluex.liquidbounce.utils.ClientUtils
+import net.ccbluex.liquidbounce.utils.RaycastUtils
 import net.ccbluex.liquidbounce.utils.Rotation
 import net.ccbluex.liquidbounce.utils.RotationUtils
 import net.ccbluex.liquidbounce.utils.extensions.getDistanceToEntityBox
@@ -25,6 +26,7 @@ import net.minecraft.client.settings.KeyBinding
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityLiving
 import net.minecraft.entity.EntityLivingBase
+import net.minecraft.entity.item.EntityArmorStand
 import net.minecraft.item.ItemSword
 import net.minecraft.network.play.client.C02PacketUseEntity
 import net.minecraft.network.play.client.C07PacketPlayerDigging
@@ -43,7 +45,8 @@ import kotlin.math.floor
 import kotlin.math.min
 
 @ModuleInfo(
-    name = "WtapBot", description = "The module emulate the legit player's combat action.",
+    name = "WtapBot",
+    description = "The module emulate the legit player's combat action.",
     category = ModuleCategory.COMBAT
 )
 class WtapBot : Module() {
@@ -52,8 +55,7 @@ class WtapBot : Module() {
 
         override fun onChanged(oldValue: Int, newValue: Int) {
             val minCPS = minCPSValue.get()
-            if (minCPS > newValue)
-                set(minCPS)
+            if (minCPS > newValue) set(minCPS)
         }
 
     }
@@ -62,8 +64,7 @@ class WtapBot : Module() {
 
         override fun onChanged(oldValue: Int, newValue: Int) {
             val maxCPS = maxCPSValue.get()
-            if (maxCPS < newValue)
-                set(maxCPS)
+            if (maxCPS < newValue) set(maxCPS)
         }
 
     }
@@ -93,6 +94,7 @@ class WtapBot : Module() {
     private val health = FloatValue("HealthIsLowerThan", 6f, 0f, 20f)
     private val comboed = IntegerValue("BeingComboedMoreThan", 2, 2, 5)
 
+    private val auraMode = BoolValue("AuraMode", false)
 
     private val backTraces = mutableListOf<Vec3>()
     private val wTapTimer = MSTimer()
@@ -102,7 +104,7 @@ class WtapBot : Module() {
 
     private var target: Entity? = null
     private var lastTarget: Entity? = null
-    private var counts = 5
+    private var counts = 3
 
     private var leftDelay = 0L
     private var leftLastSwing = 0L
@@ -113,41 +115,92 @@ class WtapBot : Module() {
 
     private var combo = 0
 
+
     override fun onDisable() {
-        reset()
+        reset(false)
     }
 
     @EventTarget
-    fun onRender3D(render3DEvent: Render3DEvent) {
+    fun onStrafe(event: StrafeEvent) {
 
-        if (mc.gameSettings.keyBindAttack.pressed && !lastFrameLeftDown)
-            onLeftClick()
+        aim()
+
+        val (yaw) = RotationUtils.targetRotation ?: return
+        var strafe = event.strafe
+        var forward = event.forward
+        val friction = event.friction
+
+        var f = strafe * strafe + forward * forward
+
+        if (f >= 1.0E-4F) {
+            f = MathHelper.sqrt_float(f)
+
+            if (f < 1.0F) f = 1.0F
+
+            f = friction / f
+            strafe *= f
+            forward *= f
+
+            val yawSin = MathHelper.sin((yaw * Math.PI / 180F).toFloat())
+            val yawCos = MathHelper.cos((yaw * Math.PI / 180F).toFloat())
+
+            mc.thePlayer.motionX += strafe * yawCos - forward * yawSin
+            mc.thePlayer.motionZ += forward * yawCos + strafe * yawSin
+        }
+
+        event.cancelEvent()
+    }
+
+    @EventTarget
+    fun onRender3D(event: Render3DEvent) {
+
+        if (mc.gameSettings.keyBindAttack.pressed && !lastFrameLeftDown) onLeftClick()
 
         lastFrameLeftDown = mc.gameSettings.keyBindAttack.pressed
 
 
-        if (target != null && !blocking && System.currentTimeMillis() - leftLastSwing >= leftDelay
-            && blockIdleTimer.hasTimePassed(blockIdleTimeout.get().toLong())) {
-            KeyBinding.onTick(mc.gameSettings.keyBindAttack.keyCode) // Minecraft Click Handling
+
+        if (target != null && target !in mc.theWorld.loadedEntityList) reset()
+
+        target ?: return
+
+        if (mc.thePlayer.getDistanceToEntityBox(target!!) > captureRange.get()) reset()
+
+        target ?: return
+
+        if (mc.thePlayer.getDistanceToEntityBox(target!!) > reach.get() + 3f) combo = 0
+
+
+    }
+
+    @EventTarget
+    private fun attack(event: TickEvent) {
+        if (mc.thePlayer != null && target != null && !blocking && System.currentTimeMillis() - leftLastSwing >= leftDelay && blockIdleTimer.hasTimePassed(
+                blockIdleTimeout.get().toLong()
+            )
+        ) {
+            // KeyBinding.onTick(mc.gameSettings.keyBindAttack.keyCode) // Minecraft Click Handling
+
+            mc.thePlayer.swingItem()
+            if (auraMode.get()) onLeftClick()
+
+            RaycastUtils.raycastEntity(reach.get().toDouble() + 3) {
+                (it is EntityLivingBase && it !is EntityArmorStand)
+            }
+                ?.also {
+
+                    if (mc.thePlayer.getDistanceToEntityBox(it) <= reach.get()) {
+
+                        LiquidBounce.eventManager.callEvent(AttackEvent(it))
+                        mc.netHandler.addToSendQueue(C02PacketUseEntity(it, C02PacketUseEntity.Action.ATTACK))
+                        mc.thePlayer.attackTargetEntityWithCurrentItem(it)
+                    }
+                }
+
 
             leftLastSwing = System.currentTimeMillis()
             leftDelay = TimeUtils.randomClickDelay(minCPSValue.get(), maxCPSValue.get())
         }
-
-        if (target != null && target !in mc.theWorld.loadedEntityList)
-            reset()
-
-        target ?: return
-
-        if (mc.thePlayer.getDistanceToEntityBox(target!!) > captureRange.get())
-            reset()
-
-        target ?: return
-
-        if (mc.thePlayer.getDistanceToEntityBox(target!!) > reach.get() + 3f)
-            combo = 0
-
-        aim()
     }
 
     @EventTarget
@@ -155,8 +208,7 @@ class WtapBot : Module() {
 
         target ?: return
 
-        if (backTraces.size > 10)
-            backTraces.removeAt(0)
+        if (backTraces.size > 10) backTraces.removeAt(0)
         backTraces.add(target!!.positionVector)
 
         setKeyStates()
@@ -170,47 +222,43 @@ class WtapBot : Module() {
 
     @EventTarget
     fun onKey(keyEvent: KeyEvent) {
-        if (keyEvent.key == Keyboard.getKeyIndex(stopKey.get().toUpperCase()))
-            reset()
+        if (keyEvent.key == Keyboard.getKeyIndex(stopKey.get().toUpperCase())) reset(false)
     }
 
     @EventTarget
     fun onPacket(packetEvent: PacketEvent) {
         mc.thePlayer ?: return
-        if (packetEvent.packet is S12PacketEntityVelocity && packetEvent.packet.entityID == mc.thePlayer.entityId)
-            combo = if (combo > 0) 0 else combo - 1
+        if (packetEvent.packet is S12PacketEntityVelocity && packetEvent.packet.entityID == mc.thePlayer.entityId) combo =
+            if (combo > 0) 0 else combo - 1
 
 
         target ?: return
-        if (packetEvent.packet is S19PacketEntityStatus &&
-            packetEvent.packet.getEntity(mc.theWorld) == target &&
-            packetEvent.packet.opCode.toInt() == 2
-        )
-            combo = if (combo < 0) 0 else combo + 1
+        if (packetEvent.packet is S19PacketEntityStatus && packetEvent.packet.getEntity(mc.theWorld) == target && packetEvent.packet.opCode.toInt() == 2) combo =
+            if (combo < 0) 0 else combo + 1
 
         if (packetEvent.packet is S12PacketEntityVelocity && packetEvent.packet.entityID == mc.thePlayer.entityId && doEscape.get()) {
 
             if (mc.thePlayer.health < health.get()) {
                 reset()
-                mc.thePlayer.rotationYaw = -(atan2(packetEvent.packet.motionX.toDouble(),
-                    packetEvent.packet.motionZ.toDouble()
+                mc.thePlayer.rotationYaw = -(atan2(
+                    packetEvent.packet.motionX.toDouble(), packetEvent.packet.motionZ.toDouble()
                 ) * 180 / Math.PI).toFloat()
                 mc.gameSettings.keyBindForward.pressed = true
             }
 
             if (combo <= -comboed.get()) {
                 reset()
-                mc.thePlayer.rotationYaw = -(atan2(packetEvent.packet.motionX.toDouble(),
-                    packetEvent.packet.motionZ.toDouble()
+                mc.thePlayer.rotationYaw = -(atan2(
+                    packetEvent.packet.motionX.toDouble(), packetEvent.packet.motionZ.toDouble()
                 ) * 180 / Math.PI).toFloat()
                 mc.gameSettings.keyBindForward.pressed = true
             }
         }
     }
 
-    private fun reset() {
+    private fun reset(bool: Boolean = true) {
 
-        counts = 5
+        counts = 3
         val settings = mc.gameSettings
 
         settings.keyBindUseItem.pressed = GameSettings.isKeyDown(settings.keyBindUseItem)
@@ -228,19 +276,23 @@ class WtapBot : Module() {
 
 
         backTraces.clear()
+
+        if (auraMode.get() && bool) onLeftClick()
     }
 
     private fun setKeyStates() {
 
         val settings = mc.gameSettings
 
-        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() + 1.0f && combo <= 0
-            && abs(RotationUtils.getAngleDifference(mc.thePlayer.rotationYaw, target!!.rotationYaw)) < 45)
-            if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong() * 3))
-                triggerStap()
+        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() + 1.0f && combo <= 0 && abs(
+                RotationUtils.getAngleDifference(
+                    RotationUtils.serverRotation.yaw,
+                    target!!.rotationYaw
+                )
+            ) < 45
+        ) if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong() * 3)) triggerStap()
 
-        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() - 0.3f && combo > 0)
-            triggerStap()
+        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() - 0.3f && combo > 0) triggerStap()
 
         //wtap
         if (wTapTimer.hasTimePassed(wTapTimeOut.get().toLong())) {
@@ -293,10 +345,8 @@ class WtapBot : Module() {
         }
 
         //jumptap
-        if (doJumpTap.get() && combo > 2)
-            mc.gameSettings.keyBindJump.pressed = true
-        else
-            mc.gameSettings.keyBindJump.pressed = Keyboard.isKeyDown(settings.keyBindJump.keyCode)
+        if (doJumpTap.get() && combo > 2) mc.gameSettings.keyBindJump.pressed = true
+        else mc.gameSettings.keyBindJump.pressed = Keyboard.isKeyDown(settings.keyBindJump.keyCode)
 
         //manual ad override
         val leftDown = Keyboard.isKeyDown(settings.keyBindLeft.keyCode)
@@ -322,14 +372,11 @@ class WtapBot : Module() {
 
         mc.thePlayer.heldItem ?: return
 
-        if (mc.thePlayer.heldItem.item !is ItemSword)
-            return
+        if (mc.thePlayer.heldItem.item !is ItemSword) return
 
-        if (blocking)
-            return
+        if (blocking) return
 
-        if (!blockIdleTimer.hasTimePassed(blockIdleTimeout.get().toLong()))
-            return
+        if (!blockIdleTimer.hasTimePassed(blockIdleTimeout.get().toLong())) return
 
         val interact = mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() && doInteractBlock.get()
 
@@ -339,7 +386,7 @@ class WtapBot : Module() {
             val expandSize = target!!.collisionBorderSize.toDouble()
             val aABB = target!!.entityBoundingBox.expand(expandSize, expandSize, expandSize)
 
-            val (yaw,pitch) = Rotation(mc.thePlayer.rotationYaw,mc.thePlayer.rotationPitch)
+            val (yaw, pitch) = RotationUtils.serverRotation
             val yawCos = MathHelper.cos(-yaw * 0.017453292f - Math.PI.toFloat())
             val yawSin = MathHelper.sin(-yaw * 0.017453292f - Math.PI.toFloat())
             val pitchCos = -MathHelper.cos(-pitch * 0.017453292f)
@@ -352,11 +399,11 @@ class WtapBot : Module() {
             val hitVec = movingObject.hitVec
 
             mc.netHandler.addToSendQueue(
-                C02PacketUseEntity(target!!, Vec3(
-                hitVec.xCoord - target!!.posX,
-                hitVec.yCoord - target!!.posY,
-                hitVec.zCoord - target!!.posZ)
-            )
+                C02PacketUseEntity(
+                    target!!, Vec3(
+                        hitVec.xCoord - target!!.posX, hitVec.yCoord - target!!.posY, hitVec.zCoord - target!!.posZ
+                    )
+                )
             )
 
             mc.netHandler.addToSendQueue(C02PacketUseEntity(target!!, C02PacketUseEntity.Action.INTERACT))
@@ -369,7 +416,11 @@ class WtapBot : Module() {
 
     private fun tryUnblock() {
         if (blocking) {
-            mc.netHandler.addToSendQueue(C07PacketPlayerDigging(C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN))
+            mc.netHandler.addToSendQueue(
+                C07PacketPlayerDigging(
+                    C07PacketPlayerDigging.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, EnumFacing.DOWN
+                )
+            )
 
             blocking = false
             blockIdleTimer.reset()
@@ -380,31 +431,51 @@ class WtapBot : Module() {
     }
 
     private fun onLeftClick() {
-        val thisTarget = mc.theWorld.loadedEntityList
-            .filter { KillAura::isEnemy.invoke(LiquidBounce.moduleManager.getModule("KillAura") as KillAura, it) }
-            .filter { mc.thePlayer.getDistanceToEntityBox(it) < captureRange.get() }
-            .minBy { RotationUtils.getRotationDifference(it) }
+        val thisTarget = mc.theWorld.loadedEntityList.filter {
+            KillAura::isEnemy.invoke(
+                LiquidBounce.moduleManager.getModule("KillAura") as KillAura,
+                it
+            )
+        }.filter {
+            mc.thePlayer.getDistanceToEntityBox(it) < captureRange.get()
+        }.minBy {
+            if (!auraMode.get())
+                RotationUtils.getRotationDifference(it)
+            else
+                it.hurtResistantTime.toDouble() +
+                        if (mc.thePlayer.getDistanceToEntityBox(it) > reach.get() - .5) {
+                            mc.thePlayer.getDistanceToEntityBox(it) * 100
+                        }
+                        else{
+                            if (RotationUtils.getRotationDifference(it) > 10)
+                                500.0
+                            else
+                                0.0
+                        }
+        }
 
 
         if (thisTarget == lastTarget && lastTarget != null) {
-            if (counts > 0)
-                counts--
+
+            if (counts > 0) counts--
         } else {
             lastTarget = thisTarget
 
-            reset()
+            if (!auraMode.get()) reset(false)
         }
+
+        if (auraMode.get() && combo < 3) target = thisTarget
 
         when (counts) {
             0 -> {
                 target = thisTarget
-                LiquidBounce.hud.addNotification(Notification("Target ${lastTarget!!.name} locked"))
+                // LiquidBounce.hud.addNotification(Notification("Target ${lastTarget!!.name} locked"))
                 combo = 0
             }
-
-            2 -> {
-                LiquidBounce.hud.addNotification(Notification("Click 2 more time to lock ${lastTarget!!.name}"))
-            }
+//
+//            2 -> {
+//                LiquidBounce.hud.addNotification(Notification("Click 2 more time to lock ${lastTarget!!.name}"))
+//            }
 
             else -> {
             }
@@ -412,38 +483,39 @@ class WtapBot : Module() {
     }
 
     private fun aim() {
-        if(backTraces.isEmpty())
-            backTraces.add(target!!.positionVector)
+        target ?: return
+
+        if (backTraces.isEmpty()) backTraces.add(target!!.positionVector)
 
         backTraces[backTraces.size - 1] = target!!.positionVector
 
         val index = floor(
             backTraces.size * (1 - clamp(
-                mc.thePlayer.getDistanceToEntityBox(target!!) / reach.get() - 1,
-                0.01,
-                1.0
+                mc.thePlayer.getDistanceToEntityBox(target!!) / reach.get() - 1, 0.01, 1.0
             ))
         ).toInt()
-        val aimPos = backTraces[clamp(index, 0, backTraces.size - 1)]
+        val aimPos = backTraces[clamp(index, 0, backTraces.size)]
 
         val xOffset = aimPos.xCoord - target!!.posX
         val yOffset = aimPos.yCoord - target!!.posY
         val zOffset = aimPos.zCoord - target!!.posZ
 
-        RotationUtils.searchCenter(
+        val vecRot = RotationUtils.searchCenter(
             target!!.entityBoundingBox.offset(xOffset, yOffset, zOffset).expand(-0.05, -0.05, -0.05),
             false,
             false,
             false,
-            true,
+            false,
             300F
         )
-            .rotation.toPlayer(mc.thePlayer)
+
+        val rotation = vecRot?.rotation
+
+        RotationUtils.setTargetRotation(rotation ?: RotationUtils.serverRotation)
     }
 
     private fun triggerStap() {
-        if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong()))
-            sTapTimer.reset()
+        if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong())) sTapTimer.reset()
     }
 
     override val tag: String?
