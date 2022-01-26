@@ -143,6 +143,7 @@ object CommandManager : Iterable<Command> {
         // utility commands
         addCommand(CommandUsername.createCommand())
         addCommand(CommandPosition.createCommand())
+        addCommand(CommandLogin.createCommand())
     }
 
     fun addCommand(command: Command) {

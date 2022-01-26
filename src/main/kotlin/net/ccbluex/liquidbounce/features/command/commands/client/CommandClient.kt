@@ -19,6 +19,7 @@
 package net.ccbluex.liquidbounce.features.command.commands.client
 
 import net.ccbluex.liquidbounce.LiquidBounce
+import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
@@ -53,6 +54,7 @@ object CommandClient {
                     .begin("reload")
                     .handler { _, _ ->
                         // todo: reload client
+                        ConfigSystem.load()
                     }
                     .build()
             )
