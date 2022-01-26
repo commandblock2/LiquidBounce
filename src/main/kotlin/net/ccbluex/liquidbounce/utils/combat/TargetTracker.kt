@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2016 - 2021 CCBlueX
+ * Copyright (c) 2016 - 2022 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import net.minecraft.entity.LivingEntity
 /**
  * A target tracker to choose the best enemy to attack
  */
-class TargetTracker(defaultPriority: PriorityEnum = PriorityEnum.HEALTH) : Configurable("target") {
+class TargetTracker(defaultPriority: PriorityEnum = PriorityEnum.HEALTH) : Configurable("Target") {
 
     var lockedOnTarget: Entity? = null
     var maxDistanceSquared: Double = 0.0

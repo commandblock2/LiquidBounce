@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2016 - 2021 CCBlueX
+ * Copyright (c) 2016 - 2022 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ import kotlin.math.sqrt
 /**
  * Configurable to configure the dynamic rotation engine
  */
-class RotationsConfigurable : Configurable("rotations") {
+class RotationsConfigurable : Configurable("Rotations") {
     val turnSpeed by curve("TurnSpeed", arrayOf(4f, 7f, 10f, 3f, 2f, 0.7f))
     val fixVelocity by boolean("FixVelocity", true)
 }

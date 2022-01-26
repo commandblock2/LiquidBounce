@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2016 - 2021 CCBlueX
+ * Copyright (c) 2016 - 2022 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,9 @@
  */
 package net.ccbluex.liquidbounce.config
 
-import com.google.gson.*
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import com.google.gson.reflect.TypeToken
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.adapter.*
@@ -84,7 +86,7 @@ object ConfigSystem {
      */
     fun load() {
         for (configurable in configurables) { // Make a new .json file to save our root configurable
-            File(rootFolder, "${configurable.name}.json").runCatching {
+            File(rootFolder, "${configurable.name.lowercase()}.json").runCatching {
                 if (!exists()) {
                     store()
                     return@runCatching
@@ -155,7 +157,7 @@ object ConfigSystem {
      */
     fun store() {
         for (configurable in configurables) { // Make a new .json file to save our root configurable
-            File(rootFolder, "${configurable.name}.json").runCatching {
+            File(rootFolder, "${configurable.name.lowercase()}.json").runCatching {
                 if (!exists()) {
                     createNewFile().let { logger.debug("Created new file (status: $it)") }
                 }

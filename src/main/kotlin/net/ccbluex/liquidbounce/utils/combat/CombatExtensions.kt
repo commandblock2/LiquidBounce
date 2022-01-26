@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2016 - 2021 CCBlueX
+ * Copyright (c) 2016 - 2022 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ val globalEnemyConfigurable = EnemyConfigurable()
 /**
  * Configurable to configure which entities and their state (like being dead) should be considered as enemy
  */
-class EnemyConfigurable : Configurable("enemies") {
+class EnemyConfigurable : Configurable("Enemies") {
 
     // Players should be considered as a enemy
     val players by boolean("Players", true)

@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2016 - 2021 CCBlueX
+ * Copyright (c) 2016 - 2022 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,17 +43,12 @@ object ModuleTrigger : Module("Trigger", Category.COMBAT) {
         val crosshair = mc.crosshairTarget
 
         if (crosshair is EntityHitResult && crosshair.entity.shouldBeAttacked()) {
-            cpsTimer.tick(
-                click = {
-                    interaction.attackEntity(player, crosshair.entity)
-                    player.swingHand(Hand.MAIN_HAND)
-                },
-                condition = {
-                    !cooldown || player.getAttackCooldownProgress(0.0f) >= 1.0f
-                },
-                cps
-            )
+            val clicks = cpsTimer.clicks(condition = { !cooldown || player.getAttackCooldownProgress(0.0f) >= 1.0f }, cps)
 
+            repeat(clicks) {
+                interaction.attackEntity(player, crosshair.entity)
+                player.swingHand(Hand.MAIN_HAND)
+            }
         }
     }
 
