@@ -2,6 +2,7 @@
   <configuration default="false" name="1.8.9-Forge" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="GradleStart" />
     <module name="LiquidBounce.1.8.9-Forge.main" />
+    <shortenClasspath name="NONE" />
     <option name="VM_PARAMETERS" value="-Dfml.coreMods.load=net.ccbluex.liquidbounce.injection.forge.MixinLoader" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/1.8.9-Forge/run" />
     <RunnerSettings RunnerId="Run" />

@@ -11,6 +11,7 @@ import net.ccbluex.liquidbounce.features.module.ModuleInfo
 import net.ccbluex.liquidbounce.features.module.modules.combat.KillAura
 import net.ccbluex.liquidbounce.script.api.global.Chat
 import net.ccbluex.liquidbounce.ui.client.hud.element.elements.Notification
+import net.ccbluex.liquidbounce.utils.ClientUtils
 import net.ccbluex.liquidbounce.utils.RaycastUtils
 import net.ccbluex.liquidbounce.utils.Rotation
 import net.ccbluex.liquidbounce.utils.RotationUtils
@@ -74,6 +75,7 @@ class WtapBot : Module() {
 
     //is set manually in case u use more than normal reach
     private val reach = FloatValue("ClientReach", 3f, 3f, 6f)
+    private val comboExtendedReach = FloatValue("ComboExtendedReach", 1f, 0f, 3f)
     private val hurtTime = IntegerValue("HurtTime", 1, 0, 10)
     private val wTapTimeOut = IntegerValue("WTapTimeout", 120, 0, 500)
 
@@ -102,8 +104,8 @@ class WtapBot : Module() {
     private val adStrafeTimer = MSTimer()
     private val blockIdleTimer = MSTimer()
 
-    private var target: Entity? = null
-    private var lastTarget: Entity? = null
+    private var target: EntityLivingBase? = null
+    private var lastTarget: EntityLivingBase? = null
     private var counts = 3
 
     private var leftDelay = 0L
@@ -115,6 +117,8 @@ class WtapBot : Module() {
 
     private var combo = 0
 
+    private lateinit var rotation: Rotation
+
 
     override fun onDisable() {
         reset(false)
@@ -122,8 +126,6 @@ class WtapBot : Module() {
 
     @EventTarget
     fun onStrafe(event: StrafeEvent) {
-
-        aim()
 
         val (yaw) = RotationUtils.targetRotation ?: return
         var strafe = event.strafe
@@ -168,13 +170,23 @@ class WtapBot : Module() {
 
         target ?: return
 
-        if (mc.thePlayer.getDistanceToEntityBox(target!!) > reach.get() + 3f) combo = 0
-
+        if (mc.thePlayer.getDistanceToEntityBox(target!!) > calcReach() + 1f)
+            combo = 0
 
     }
 
     @EventTarget
-    private fun attack(event: TickEvent) {
+    private fun attack(event: UpdateEvent) {
+
+        target ?: return
+
+        if (backTraces.size > 10) backTraces.removeAt(0)
+        backTraces.add(target!!.positionVector)
+
+        setKeyStates()
+
+        aim()
+
         if (mc.thePlayer != null && target != null && !blocking && System.currentTimeMillis() - leftLastSwing >= leftDelay && blockIdleTimer.hasTimePassed(
                 blockIdleTimeout.get().toLong()
             )
@@ -184,35 +196,26 @@ class WtapBot : Module() {
             mc.thePlayer.swingItem()
             if (auraMode.get()) onLeftClick()
 
-            RaycastUtils.raycastEntity(reach.get().toDouble() + 3) {
+            val entt = RaycastUtils.raycastEntity(reach.get().toDouble(), rotation.yaw,rotation.pitch) {
                 (it is EntityLivingBase && it !is EntityArmorStand)
             }
-                ?.also {
+            entt?.also {
 
-                    if (mc.thePlayer.getDistanceToEntityBox(it) <= reach.get()) {
+                if (mc.thePlayer.getDistanceToEntityBox(it) <= calcReach()) {
 
-                        LiquidBounce.eventManager.callEvent(AttackEvent(it))
-                        mc.netHandler.addToSendQueue(C02PacketUseEntity(it, C02PacketUseEntity.Action.ATTACK))
-                        mc.thePlayer.attackTargetEntityWithCurrentItem(it)
-                    }
+                    LiquidBounce.eventManager.callEvent(AttackEvent(it))
+                    mc.netHandler.addToSendQueue(C02PacketUseEntity(it, C02PacketUseEntity.Action.ATTACK))
+                    mc.thePlayer.attackTargetEntityWithCurrentItem(it)
                 }
-
+            }
+            if (entt == null && mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get())
+                ClientUtils.displayChatMessage(mc.thePlayer.getDistanceToEntityBox(target!!).toString())
 
             leftLastSwing = System.currentTimeMillis()
             leftDelay = TimeUtils.randomClickDelay(minCPSValue.get(), maxCPSValue.get())
         }
     }
 
-    @EventTarget
-    fun onUpdate(updateEvent: UpdateEvent) {
-
-        target ?: return
-
-        if (backTraces.size > 10) backTraces.removeAt(0)
-        backTraces.add(target!!.positionVector)
-
-        setKeyStates()
-    }
 
     @EventTarget
     fun onAttack(attackEvent: AttackEvent) {
@@ -284,7 +287,7 @@ class WtapBot : Module() {
 
         val settings = mc.gameSettings
 
-        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() + 1.0f && combo <= 0 && abs(
+        if (mc.thePlayer.getDistanceSqToEntity(target!!) < calcReach() + 1.0f && combo <= 0 && abs(
                 RotationUtils.getAngleDifference(
                     RotationUtils.serverRotation.yaw,
                     target!!.rotationYaw
@@ -292,7 +295,7 @@ class WtapBot : Module() {
             ) < 45
         ) if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong() * 3)) triggerStap()
 
-        if (mc.thePlayer.getDistanceSqToEntity(target!!) < reach.get() - 0.3f && combo > 0) triggerStap()
+        if (mc.thePlayer.getDistanceSqToEntity(target!!) < calcReach() - 0.3f && combo > 0) triggerStap()
 
         //wtap
         if (wTapTimer.hasTimePassed(wTapTimeOut.get().toLong())) {
@@ -330,7 +333,7 @@ class WtapBot : Module() {
 
 
         if (combo <= 0) {
-            if (mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() + 1.5f) {
+            if (mc.thePlayer.getDistanceToEntityBox(target!!) < calcReach() + 1.5f) {
                 if (strafeLeft) {
                     settings.keyBindLeft.pressed = true
                     settings.keyBindRight.pressed = false
@@ -378,7 +381,7 @@ class WtapBot : Module() {
 
         if (!blockIdleTimer.hasTimePassed(blockIdleTimeout.get().toLong())) return
 
-        val interact = mc.thePlayer.getDistanceToEntityBox(target!!) < reach.get() && doInteractBlock.get()
+        val interact = mc.thePlayer.getDistanceToEntityBox(target!!) < calcReach() && doInteractBlock.get()
 
         if (interact) {
             val positionEye = mc.renderViewEntity.getPositionEyes(1F)
@@ -391,7 +394,7 @@ class WtapBot : Module() {
             val yawSin = MathHelper.sin(-yaw * 0.017453292f - Math.PI.toFloat())
             val pitchCos = -MathHelper.cos(-pitch * 0.017453292f)
             val pitchSin = MathHelper.sin(-pitch * 0.017453292f)
-            val range = min(reach.get().toDouble(), mc.thePlayer.getDistanceToEntityBox(target!!)) + 1
+            val range = min(calcReach().toDouble(), mc.thePlayer.getDistanceToEntityBox(target!!)) + 1
             val lookAt = positionEye.addVector(yawSin * pitchCos * range, pitchSin * range, yawCos * pitchCos * range)
 
             val movingObject = aABB.calculateIntercept(positionEye, lookAt)
@@ -438,21 +441,32 @@ class WtapBot : Module() {
             )
         }.filter {
             mc.thePlayer.getDistanceToEntityBox(it) < captureRange.get()
-        }.minBy {
-            if (!auraMode.get())
-                RotationUtils.getRotationDifference(it)
-            else
-                it.hurtResistantTime.toDouble() +
-                        if (mc.thePlayer.getDistanceToEntityBox(it) > reach.get() - .5) {
-                            mc.thePlayer.getDistanceToEntityBox(it) * 100
+        }.filterIsInstance<EntityLivingBase>()
+            .minWith(
+                if (!auraMode.get())
+                    compareBy {
+                        RotationUtils.getRotationDifference(
+                            RotationUtils.toRotation(
+                                RotationUtils.getCenter(it.entityBoundingBox),
+                                false
+                            ), RotationUtils.serverRotation
+                        )
+                    }
+                else
+                    compareBy<EntityLivingBase> {
+                        mc.thePlayer.getDistanceToEntityBox(it) > calcReach() + 3
+                    }
+                        .thenBy {
+                            RotationUtils.getRotationDifference(
+                                RotationUtils.toRotation(
+                                    RotationUtils.getCenter(it.entityBoundingBox),
+                                    false
+                                ), RotationUtils.serverRotation
+                            ) > 15
                         }
-                        else{
-                            if (RotationUtils.getRotationDifference(it) > 10)
-                                500.0
-                            else
-                                0.0
-                        }
-        }
+                        .thenBy { mc.thePlayer.getDistanceToEntityBox(it) > calcReach() }
+                        .thenBy { it.hurtResistantTime }
+            )
 
 
         if (thisTarget == lastTarget && lastTarget != null) {
@@ -470,7 +484,8 @@ class WtapBot : Module() {
             0 -> {
                 target = thisTarget
                 // LiquidBounce.hud.addNotification(Notification("Target ${lastTarget!!.name} locked"))
-                combo = 0
+                if (!auraMode.get())
+                    combo = 0
             }
 //
 //            2 -> {
@@ -491,7 +506,7 @@ class WtapBot : Module() {
 
         val index = floor(
             backTraces.size * (1 - clamp(
-                mc.thePlayer.getDistanceToEntityBox(target!!) / reach.get() - 1, 0.01, 1.0
+                mc.thePlayer.getDistanceToEntityBox(target!!) / calcReach() - 1, 0.01, 1.0
             ))
         ).toInt()
         val aimPos = backTraces[clamp(index, 0, backTraces.size)]
@@ -509,15 +524,21 @@ class WtapBot : Module() {
             300F
         )
 
+
         val rotation = vecRot?.rotation
 
         RotationUtils.setTargetRotation(rotation ?: RotationUtils.serverRotation)
+        this.rotation = RotationUtils.targetRotation
     }
 
     private fun triggerStap() {
         if (sTapTimer.hasTimePassed(sTapTimeOut.get().toLong())) sTapTimer.reset()
     }
 
+    private fun calcReach(): Float {
+        return if (combo > 0 && mc.thePlayer.isSprinting) reach.get() + comboExtendedReach.get() else reach.get()
+    }
+
     override val tag: String?
-        get() = if (target == null) "Idle" else target!!.name
+        get() = if (target == null) "Idle" else target!!.name + " " + combo
 }
