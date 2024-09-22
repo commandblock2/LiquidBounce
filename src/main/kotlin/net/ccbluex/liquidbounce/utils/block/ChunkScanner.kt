@@ -109,9 +109,9 @@ object ChunkScanner : Listenable {
     }
 
     object ChunkScannerThread {
-        private val chunkUpdateQueue = ArrayBlockingQueue<UpdateRequest>(600)
+        private val chunkUpdateQueue = ArrayBlockingQueue<UpdateRequest>(6000)
 
-        private val thread = thread {
+        private val thread = thread (name = "ChunkScannerThread") {
             while (true) {
                 try {
                     val chunkUpdate = this.chunkUpdateQueue.take()
