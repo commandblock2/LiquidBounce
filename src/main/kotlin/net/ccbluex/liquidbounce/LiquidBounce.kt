@@ -55,6 +55,7 @@ import net.ccbluex.liquidbounce.utils.combat.combatTargetsConfigurable
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager
 import net.ccbluex.liquidbounce.utils.mappings.Remapper
 import net.ccbluex.liquidbounce.utils.render.WorldToScreen
+import net.ccbluex.liquidbounce.utils.world.LatencyStats
 import net.ccbluex.liquidbounce.web.browser.BrowserManager
 import net.ccbluex.liquidbounce.web.integration.IntegrationHandler
 import net.ccbluex.liquidbounce.web.socket.ClientSocket
@@ -152,6 +153,7 @@ object LiquidBounce : Listenable {
             ConfigSystem.root(ClientAccountManager)
             BrowserManager
             Fonts
+            LatencyStats
 
             // Register commands and modules
             CommandManager.registerInbuilt()
