@@ -31,6 +31,7 @@ import net.ccbluex.liquidbounce.features.module.modules.combat.*
 import net.ccbluex.liquidbounce.features.module.modules.combat.autoarmor.ModuleAutoArmor
 import net.ccbluex.liquidbounce.features.module.modules.combat.crystalaura.ModuleCrystalAura
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
+import net.ccbluex.liquidbounce.features.module.modules.combat.velocity.ModuleVelocity
 import net.ccbluex.liquidbounce.features.module.modules.exploit.*
 import net.ccbluex.liquidbounce.features.module.modules.exploit.disabler.ModuleDisabler
 import net.ccbluex.liquidbounce.features.module.modules.exploit.servercrasher.ModuleServerCrasher
@@ -70,6 +71,7 @@ import net.ccbluex.liquidbounce.features.module.modules.world.*
 import net.ccbluex.liquidbounce.features.module.modules.world.autofarm.ModuleAutoFarm
 import net.ccbluex.liquidbounce.features.module.modules.world.fucker.ModuleFucker
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold
+import net.ccbluex.liquidbounce.features.module.modules.world.traps.ModuleAutoTrap
 import net.ccbluex.liquidbounce.script.ScriptApi
 import org.lwjgl.glfw.GLFW
 
@@ -156,6 +158,7 @@ object ModuleManager : Listenable, Iterable<Module> by modules {
             ModuleGhostHand,
             ModuleKick,
             ModuleMoreCarry,
+            ModuleMultiActions,
             ModuleNameCollector,
             ModuleNoPitchLimit,
             ModulePingSpoof,
@@ -298,7 +301,7 @@ object ModuleManager : Listenable, Iterable<Module> by modules {
             ModuleFastBreak,
             ModuleFastPlace,
             ModuleFucker,
-            ModuleIgnite,
+            ModuleAutoTrap,
             ModuleNoSlowBreak,
             ModuleLiquidPlace,
             ModuleProjectilePuncher,

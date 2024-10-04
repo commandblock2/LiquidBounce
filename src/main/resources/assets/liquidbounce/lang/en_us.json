@@ -465,7 +465,7 @@
   "liquidbounce.module.holeESP.description": "Detects and displays safe spots for crystal PvP.",
   "liquidbounce.module.hud.description": "Shows an in-game overlay with various useful tools.",
   "liquidbounce.module.hud.messages.hidingAppearance": "The client appearance is currently hidden. Use '.client appearance show' to re-enable it.",
-  "liquidbounce.module.ignite.description": "Automatically sets targets around you on fire.",
+  "liquidbounce.module.autoTrap.description": "Automatically sets targets on fire or traps them.",
   "liquidbounce.module.extinguish.description": "Automatically extinguishes yourself when on fire.",
   "liquidbounce.module.inventoryCleaner.description": "Automatically sorts your inventory and drops unnecessary items.",
   "liquidbounce.module.inventoryMove.description": "Allows you to walk while an inventory is opened.",
@@ -584,5 +584,6 @@
   "liquidbounce.module.autoShop.messages.reloadSuccess": "Reloaded successfully",
   "liquidbounce.module.autoShop.messages.loadError": "Cannot load the config",
   "liquidbounce.module.liquidPlace.description": "Allows you to place blocks on liquids.",
+  "liquidbounce.module.multiActions.description": "Allows you to do multiple things at the same time.",
   "liquidbounce.module.bedDefender.description": "Automatically places blocks to defend your bed in BedWars."
 }
