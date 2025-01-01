@@ -19,12 +19,12 @@
 package net.ccbluex.liquidbounce.utils.movement
 
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
-import net.ccbluex.liquidbounce.utils.block.forEachBlockPosBetween
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.toDegrees
 import net.ccbluex.liquidbounce.utils.client.toRadians
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.math.plus
+import net.ccbluex.liquidbounce.utils.math.rangeTo
 import net.ccbluex.liquidbounce.utils.math.times
 import net.minecraft.client.input.Input
 import net.minecraft.client.network.ClientPlayerEntity
@@ -41,7 +41,12 @@ data class DirectionalInput(
     val left: Boolean,
     val right: Boolean,
 ) {
-    constructor(input: Input) : this(input.pressingForward, input.pressingBack, input.pressingLeft, input.pressingRight)
+    constructor(input: Input) : this(
+        input.playerInput.forward,
+        input.playerInput.backward,
+        input.playerInput.left,
+        input.playerInput.right
+    )
 
     override fun equals(other: Any?): Boolean {
         return other is DirectionalInput &&
@@ -59,9 +64,8 @@ data class DirectionalInput(
         return result
     }
 
-    fun isMoving(): Boolean {
-        return forwards || backwards || left || right
-    }
+    val isMoving: Boolean
+        get() = forwards || backwards || left || right
 
     companion object {
         val NONE = DirectionalInput(forwards = false, backwards = false, left = false, right = false)
@@ -122,7 +126,7 @@ fun findEdgeCollision(
 
     var currentFrom = from
 
-    val lineVec = to.subtract(from)
+    val lineVec = to - from
     val extendedFrom = from - lineVec * 1000.0
     val extendedTo = to + lineVec * 1000.0
 
@@ -184,8 +188,7 @@ private fun collectCollisionBoundingBoxes(
 
     val world = mc.world!!
 
-    forEachBlockPosBetween(fromBlockPos, toBlockPos) { vec ->
-        val pos = BlockPos(vec)
+    for (pos in fromBlockPos..toBlockPos) {
         val state = world.getBlockState(pos)
 
         val collisionShape = state.getCollisionShape(world, pos)

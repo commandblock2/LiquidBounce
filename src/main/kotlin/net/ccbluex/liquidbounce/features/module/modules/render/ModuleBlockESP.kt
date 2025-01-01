@@ -18,13 +18,13 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
-import net.ccbluex.liquidbounce.config.Choice
-import net.ccbluex.liquidbounce.config.ChoiceConfigurable
+import net.ccbluex.liquidbounce.config.types.Choice
+import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
 import net.ccbluex.liquidbounce.event.events.DrawOutlinesEvent
 import net.ccbluex.liquidbounce.event.events.WorldRenderEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.render.*
 import net.ccbluex.liquidbounce.render.engine.Color4b
 import net.ccbluex.liquidbounce.utils.block.AbstractBlockLocationTracker
@@ -42,31 +42,27 @@ import net.minecraft.util.math.BlockPos
  * Allows you to see selected blocks through walls.
  */
 
-object ModuleBlockESP : Module("BlockESP", Category.RENDER) {
+object ModuleBlockESP : ClientModule("BlockESP", Category.RENDER) {
 
     private val modes = choices("Mode", Glow, arrayOf(Box, Glow, Outline))
     private val targets by blocks(
         "Targets",
         findBlocksEndingWith("_BED", "DRAGON_EGG").toHashSet()
     ).onChange {
-        if (enabled) {
+        if (running) {
             disable()
             enable()
         }
         it
     }
 
-    private val colorMode = choices<GenericColorMode<Pair<BlockPos, BlockState>>>(
-        "ColorMode",
-        { it.choices[0] },
-        {
-            arrayOf(
-                MapColorMode(it),
-                GenericStaticColorMode(it, Color4b(255, 179, 72, 50)),
-                GenericRainbowColorMode(it)
-            )
-        }
-    )
+    private val colorMode = choices("ColorMode", 0) {
+        arrayOf(
+            MapColorMode(it),
+            GenericStaticColorMode(it, Color4b(255, 179, 72, 50)),
+            GenericRainbowColorMode(it)
+        )
+    }
 
     private object Box : Choice("Box") {
         override val parent: ChoiceConfigurable<Choice>
@@ -88,7 +84,7 @@ object ModuleBlockESP : Module("BlockESP", Category.RENDER) {
 
             renderEnvironmentForWorld(matrixStack) {
                 dirty = drawInternal(
-                    BlockTracker.trackedBlockMap.keys.mapTo(hashSetOf()) { it.asBlockPos() },
+                    BlockTracker.trackedBlockMap.keys,
                     colorMode,
                     fullAlpha,
                     drawOutline

@@ -18,9 +18,9 @@
  */
 package net.ccbluex.liquidbounce.render.engine
 
-import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
+import org.lwjgl.opengl.GL20
 import java.awt.Color
 import java.nio.ByteBuffer
 import kotlin.math.cos
@@ -91,8 +91,8 @@ data class UV2s(val u: Short, val v: Short) {
         buffer.putShort(idx + 2, v)
     }
 
-    fun toFloatArray(): Array<Float> {
-        return arrayOf((u.toInt() and 0xFFFF) / 65535.0f, (v.toInt() and 0xFFFF) / 65535.0f)
+    fun toFloatArray(): FloatArray {
+        return floatArrayOf((u.toInt() and 0xFFFF) / 65535.0f, (v.toInt() and 0xFFFF) / 65535.0f)
     }
 }
 
@@ -160,8 +160,7 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int) {
     }
 
     private fun componentToHex(c: Int): String {
-        val hexString = Integer.toHexString(c)
-        return if (hexString.length == 1) "0$hexString" else hexString
+        return Integer.toHexString(c).padStart(2, '0')
     }
 
     fun red(red: Int) = Color4b(red, this.g, this.b, this.a)
@@ -172,15 +171,24 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int) {
 
     fun alpha(alpha: Int) = Color4b(this.r, this.g, this.b, alpha)
 
-    fun toRGBA() = Color(this.r, this.g, this.b, this.a).rgb
-
-    fun toARGB() = ColorHelper.Argb.getArgb(this.a, this.r, this.g, this.b)
+    fun toARGB() = (a shl 24) or (r shl 16) or (g shl 8) or b
 
     fun toABGR() = (a shl 24) or (b shl 16) or (g shl 8) or r
 
-    fun fade(fade: Float) = if (fade == 1f) {
+    fun fade(fade: Float): Color4b {
+        return if (fade == 1f) {
             this
         } else {
             alpha((a * fade).toInt())
         }
+    }
+
+    fun darker() = Color4b(darkerChannel(r), darkerChannel(g), darkerChannel(b), a)
+
+    private fun darkerChannel(value: Int) = (value * 0.7).toInt().coerceAtLeast(0)
+
+    fun putToUniform(pointer: Int) {
+        GL20.glUniform4f(pointer, r / 255f, g / 255f, b / 255f, a / 255f)
+    }
+
 }

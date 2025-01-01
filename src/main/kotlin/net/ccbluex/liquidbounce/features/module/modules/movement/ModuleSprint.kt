@@ -18,11 +18,11 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.movement
 
-import net.ccbluex.liquidbounce.config.NamedChoice
+import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.utils.aiming.Rotation
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
@@ -35,7 +35,7 @@ import net.minecraft.util.math.MathHelper
  * Sprints automatically.
  */
 
-object ModuleSprint : Module("Sprint", Category.MOVEMENT) {
+object ModuleSprint : ClientModule("Sprint", Category.MOVEMENT) {
 
     enum class SprintMode(override val choiceName: String) : NamedChoice {
         LEGIT("Legit"),
@@ -47,17 +47,20 @@ object ModuleSprint : Module("Sprint", Category.MOVEMENT) {
 
     private val ignoreBlindness by boolean("IgnoreBlindness", false)
     private val ignoreHunger by boolean("IgnoreHunger", false)
+    private val ignoreCollision by boolean("IgnoreCollision", false)
     private val stopOnGround by boolean("StopOnGround", true)
     private val stopOnAir by boolean("StopOnAir", true)
 
     // DO NOT USE TREE TO MAKE SURE THAT THE ROTATIONS ARE NOT CHANGED
     private val rotationsConfigurable = RotationsConfigurable(this)
 
-    fun shouldSprintOmnidirectionally() = enabled && sprintMode == SprintMode.OMNIDIRECTIONAL
+    fun shouldSprintOmnidirectionally() = running && sprintMode == SprintMode.OMNIDIRECTIONAL
 
-    fun shouldIgnoreBlindness() = enabled && ignoreBlindness
+    fun shouldIgnoreBlindness() = running && ignoreBlindness
 
-    fun shouldIgnoreHunger() = enabled && ignoreHunger
+    fun shouldIgnoreHunger() = running && ignoreHunger
+
+    fun shouldIgnoreCollision() = running && ignoreCollision
 
     fun shouldPreventSprint(): Boolean {
         val deltaYaw = player.yaw - (RotationManager.currentRotation ?: return false).yaw
@@ -67,9 +70,9 @@ object ModuleSprint : Module("Sprint", Category.MOVEMENT) {
                 MathHelper.sin(deltaYaw * 0.017453292f) > 1.0E-5
         val preventSprint = (if (player.isOnGround) stopOnGround else stopOnAir)
             && !shouldSprintOmnidirectionally()
-            && RotationManager.storedAimPlan?.applyVelocityFix == false && !hasForwardMovement
+            && RotationManager.workingAimPlan?.applyVelocityFix == false && !hasForwardMovement
 
-        return enabled && preventSprint
+        return running && preventSprint
     }
 
     @Suppress("unused")
@@ -100,6 +103,4 @@ object ModuleSprint : Module("Sprint", Category.MOVEMENT) {
         RotationManager.aimAt(rotationsConfigurable.toAimPlan(rotation), Priority.NOT_IMPORTANT,
             this@ModuleSprint)
     }
-
-
 }

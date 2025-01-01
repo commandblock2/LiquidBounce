@@ -27,10 +27,10 @@ import net.minecraft.client.render.Camera
 import net.minecraft.client.util.math.MatrixStack
 
 @Nameable("gameRender")
-class GameRenderEvent : Event()
+object GameRenderEvent : Event()
 
 @Nameable("screenRender")
-class ScreenRenderEvent : Event()
+class ScreenRenderEvent(val context: DrawContext, val partialTicks: Float) : Event()
 
 @Nameable("worldRender")
 class WorldRenderEvent(val matrixStack: MatrixStack, val camera: Camera, val partialTicks: Float) : Event()

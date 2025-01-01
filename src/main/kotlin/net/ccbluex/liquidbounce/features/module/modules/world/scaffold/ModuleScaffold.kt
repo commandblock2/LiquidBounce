@@ -18,18 +18,18 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.world.scaffold
 
-import net.ccbluex.liquidbounce.config.Choice
-import net.ccbluex.liquidbounce.config.NamedChoice
-import net.ccbluex.liquidbounce.config.NoneChoice
-import net.ccbluex.liquidbounce.config.ToggleableConfigurable
+import it.unimi.dsi.fastutil.ints.IntObjectPair
+import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.config.types.NoneChoice
+import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.BlockCountChangeEvent
 import net.ccbluex.liquidbounce.event.events.MovementInputEvent
 import net.ccbluex.liquidbounce.event.events.SimulatedTickEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.event.repeatable
+import net.ccbluex.liquidbounce.event.tickHandler
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleSafeWalk
 import net.ccbluex.liquidbounce.features.module.modules.player.nofall.modes.NoFallBlink
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
@@ -38,7 +38,10 @@ import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleSca
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold.ScaffoldRotationConfigurable.rotationTiming
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ScaffoldBlockItemSelection.isValidBlock
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.features.*
-import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.*
+import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldBreezilyTechnique
+import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldExpandTechnique
+import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldGodBridgeTechnique
+import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldNormalTechnique
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.normal.ScaffoldDownFeature
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.normal.ScaffoldEagleFeature
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.tower.ScaffoldTowerKarhu
@@ -48,7 +51,8 @@ import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.tower.Sca
 import net.ccbluex.liquidbounce.render.engine.Color4b
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
-import net.ccbluex.liquidbounce.utils.block.PlacementSwingMode
+import net.ccbluex.liquidbounce.utils.aiming.withFixedYaw
+import net.ccbluex.liquidbounce.utils.block.SwingMode
 import net.ccbluex.liquidbounce.utils.block.doPlacement
 import net.ccbluex.liquidbounce.utils.block.getCenterDistanceSquared
 import net.ccbluex.liquidbounce.utils.block.getState
@@ -62,10 +66,14 @@ import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.item.*
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
+import net.ccbluex.liquidbounce.utils.kotlin.component1
+import net.ccbluex.liquidbounce.utils.kotlin.component2
+import net.ccbluex.liquidbounce.utils.math.copy
 import net.ccbluex.liquidbounce.utils.math.geometry.Line
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.math.toVec3d
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
+import net.ccbluex.liquidbounce.utils.render.placement.PlacementRenderer
 import net.ccbluex.liquidbounce.utils.sorting.ComparatorChain
 import net.minecraft.entity.EntityPose
 import net.minecraft.item.*
@@ -84,7 +92,7 @@ import kotlin.math.abs
  * Places blocks under you.
  */
 @Suppress("TooManyFunctions")
-object ModuleScaffold : Module("Scaffold", Category.WORLD) {
+object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
 
     private var delay by intRange("Delay", 0..0, 0..40, "ticks")
     private val minDist by float("MinDist", 0.0f, 0.0f..0.25f)
@@ -95,7 +103,7 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
         tree(ScaffoldMovementPrediction)
     }
 
-    internal val technique = choices<ScaffoldTechnique>(
+    internal val technique = choices(
         "Technique",
         ScaffoldNormalTechnique,
         arrayOf(
@@ -104,7 +112,7 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
             ScaffoldGodBridgeTechnique,
             ScaffoldBreezilyTechnique
         )
-    ).apply { tagBy(this) }
+    ).apply(::tagBy)
 
     private val sameYMode by enumChoice("SameY", SameYMode.OFF)
 
@@ -118,14 +126,12 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
         /**
          * Places blocks at the same Y level as the player
          */
-        ON("On", { blockPos -> BlockPos(blockPos.x, placementY, blockPos.z) }),
+        ON("On", { blockPos -> blockPos.copy(y = placementY) }),
 
         /**
          * Places blocks at the same Y level as the player, but only if the player is not falling
          */
-        FALLING("Falling", { blockPos ->
-            BlockPos(blockPos.x, placementY, blockPos.z).takeIf { player.velocity.y < 0.2 }
-        }),
+        FALLING("Falling", { blockPos -> blockPos.copy(y = placementY).takeIf { player.velocity.y < 0.2 } }),
 
         /**
          * Similar to FALLING, but only when a certain velocity is triggered and after
@@ -135,29 +141,25 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
             if (ModuleScaffold.player.velocity.y == -0.15233518685055708 && jumps >= 2) {
                 jumps = 0
 
-                BlockPos(blockPos.x, startY, blockPos.z)
+                blockPos.copy(y = startY)
             } else {
-                BlockPos(blockPos.x, startY - 1, blockPos.z)
+                blockPos.copy(y = startY - 1)
             }
         })
 
     }
 
     @Suppress("UnusedPrivateProperty")
-    val towerMode = choices<Choice>("Tower", {
-        it.choices[0] // None
-    }) {
+    val towerMode = choices("Tower", 0) {
         arrayOf(NoneChoice(it), ScaffoldTowerMotion, ScaffoldTowerPulldown, ScaffoldTowerKarhu, ScaffoldTowerVulcan)
     }
 
     val isTowering: Boolean
-        get() = towerMode.choices.indexOf(towerMode.activeChoice) != 0 && player.input.jumping
+        get() = towerMode.choices.indexOf(towerMode.activeChoice) != 0 && player.input.playerInput.jump
 
     // SafeWalk feature - uses the SafeWalk module as a base
     @Suppress("unused")
-    private val safeWalkMode = choices("SafeWalk", {
-        it.choices[1] // Safe mode
-    }, ModuleSafeWalk::createChoices)
+    private val safeWalkMode = choices("SafeWalk", 1, ModuleSafeWalk::safeWalkChoices)
 
     internal object ScaffoldRotationConfigurable : RotationsConfigurable(this) {
 
@@ -187,9 +189,10 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
 
     private var currentTarget: BlockPlacementTarget? = null
 
-    private var swingMode by enumChoice("Swing", PlacementSwingMode.DO_NOT_HIDE)
+    private var swingMode by enumChoice("Swing", SwingMode.DO_NOT_HIDE)
 
     object SimulatePlacementAttempts : ToggleableConfigurable(this, "SimulatePlacementAttempts", false) {
+
         internal val clickScheduler = tree(ClickScheduler(ModuleScaffold, false, maxCps = 100))
         val failedAttemptsOnly by boolean("FailedAttemptsOnly", true)
     }
@@ -205,6 +208,8 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
 
     private var ledge by boolean("Ledge", true)
 
+    private val renderer = tree(PlacementRenderer("Render", true, this, keep = false))
+
     private var placementY = 0
     private var forceSneak = 0
     private var startY = 0
@@ -215,17 +220,13 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
             val blockInMainHand = player.inventory.getStack(player.inventory.selectedSlot)
             val blockInOffHand = player.offHandStack
 
-            val blocksInHotbar = if (ScaffoldAutoBlockFeature.enabled) {
-                findPlaceableSlots()
-            } else {
-                emptyList()
+            val blocks = hashSetOf(blockInMainHand, blockInOffHand)
+
+            if (ScaffoldAutoBlockFeature.enabled) {
+                findPlaceableSlots().mapTo(blocks) { it.value() }
             }
 
-            return arrayOf(blockInMainHand, blockInOffHand, *blocksInHotbar.map { it.second }.toTypedArray())
-                .distinct()
-                .filterNotNull()
-                .filter { isValidBlock(it) }
-                .sumOf { it.count }
+            return blocks.sumOf { if (isValidBlock(it)) it.count else 0 }
         }
 
     val isBlockBelow: Boolean
@@ -326,7 +327,7 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
 
         // Debug stuff
         if (optimalLine != null && target != null) {
-            val b = target.placedBlock.toVec3d().add(0.5, 1.0, 0.5)
+            val b = target.placedBlock.toVec3d(0.5, 1.0, 0.5)
             val a = optimalLine.getNearestPointTo(b)
 
             // Debug the line a-b
@@ -356,11 +357,11 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
                 )
 
                 if (requiresJump) {
-                    it.movementEvent.jumping = true
+                    it.movementEvent.jump = true
                 }
 
                 if (requiresSneak > 0) {
-                    it.movementEvent.sneaking = true
+                    it.movementEvent.sneak = true
                     forceSneak = requiresSneak
                 }
             }
@@ -393,20 +394,20 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
     @Suppress("unused")
     private val movementInputHandler = handler<MovementInputEvent>(priority = EventPriorityConvention.SAFETY_FEATURE) {
         if (forceSneak > 0) {
-            it.sneaking = true
+            it.sneak = true
             forceSneak--
         }
     }
 
     @Suppress("unused")
-    val timerHandler = repeatable {
+    val timerHandler = tickHandler {
         if (timer != 1f) {
             Timer.requestTimerSpeed(timer, Priority.IMPORTANT_FOR_USAGE_1, this@ModuleScaffold)
         }
     }
 
     @Suppress("unused")
-    val tickHandler = repeatable {
+    val tickHandler = tickHandler {
         updateRenderCount(blockCount)
 
         if (player.isOnGround) {
@@ -425,8 +426,8 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
         val currentRotation = if ((rotationTiming == ON_TICK || rotationTiming == ON_TICK_SNAP) && target != null) {
             target.rotation
         } else {
-            RotationManager.serverRotation
-        }
+            RotationManager.currentRotation ?: player.rotation
+        }.normalize()
         val currentCrosshairTarget = technique.activeChoice.getCrosshairTarget(target, currentRotation)
         val currentDelay = delay.random()
 
@@ -445,20 +446,20 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
             && SimulatePlacementAttempts.clickScheduler.goingToClick
         ) {
             SimulatePlacementAttempts.clickScheduler.clicks {
-                doPlacement(currentCrosshairTarget!!, suitableHand!!, placementSwingMode = swingMode)
+                doPlacement(currentCrosshairTarget!!, suitableHand!!, swingMode = swingMode)
                 true
             }
         }
 
         if (target == null || currentCrosshairTarget == null) {
-            return@repeatable
+            return@tickHandler
         }
 
         // Does the crosshair target meet the requirements?
         if (!target.doesCrosshairTargetFullFillRequirements(currentCrosshairTarget) ||
             !isValidCrosshairTarget(currentCrosshairTarget)
         ) {
-            return@repeatable
+            return@tickHandler
         }
 
         if (!ScaffoldAutoBlockFeature.alwaysHoldBlock) {
@@ -466,7 +467,7 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
         }
 
         if (!hasBlockInMainHand && !hasBlockInOffHand) {
-            return@repeatable
+            return@tickHandler
         }
 
         val handToInteractWith = if (hasBlockInMainHand) Hand.MAIN_HAND else Hand.OFF_HAND
@@ -477,37 +478,45 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
             if (currentRotation != RotationManager.serverRotation) {
                 network.sendPacket(
                     Full(
-                        player.x, player.y, player.z, currentRotation.yaw, currentRotation.pitch,
-                        player.isOnGround
+                        player.x, player.y, player.z,
+                        currentRotation.yaw,
+                        currentRotation.pitch,
+                        player.isOnGround,
+                        player.horizontalCollision
                     )
                 )
+            }
 
-                if (rotationTiming == ON_TICK_SNAP) {
-                    RotationManager.aimAt(
-                        currentRotation,
-                        considerInventory = considerInventory,
-                        configurable = ScaffoldRotationConfigurable,
-                        provider = this@ModuleScaffold,
-                        priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
-                    )
-                }
-
+            if (rotationTiming == ON_TICK_SNAP) {
+                RotationManager.aimAt(
+                    currentRotation,
+                    considerInventory = considerInventory,
+                    configurable = ScaffoldRotationConfigurable,
+                    provider = this@ModuleScaffold,
+                    priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
+                )
             }
         }
 
         // Take the fall off position before placing the block
         val previousFallOffPos = currentOptimalLine?.let { l -> ScaffoldMovementPrediction.getFallOffPositionOnLine(l) }
 
+        renderer.addBlock(target.placedBlock)
         doPlacement(currentCrosshairTarget, handToInteractWith, {
             ScaffoldMovementPlanner.trackPlacedBlock(target)
             currentTarget = null
 
             wasSuccessful = true
             true
-        }, placementSwingMode = swingMode)
+        }, swingMode = swingMode)
 
         if (rotationTiming == ON_TICK && RotationManager.serverRotation != player.rotation) {
-            network.sendPacket(Full(player.x, player.y, player.z, player.yaw, player.pitch, player.isOnGround))
+            network.sendPacket(
+                Full(
+                    player.x, player.y, player.z, player.withFixedYaw(currentRotation), player.pitch, player.isOnGround,
+                    player.horizontalCollision
+                )
+            )
         }
 
         if (wasSuccessful) {
@@ -519,13 +528,13 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
         }
     }
 
-    private fun findPlaceableSlots() = (0..8).mapNotNull {
-        val stack = player.inventory.getStack(it)
+    private fun findPlaceableSlots() = buildList<IntObjectPair<ItemStack>>(9) {
+        for (i in 0..8) {
+            val stack = player.inventory.getStack(i)
 
-        if (isValidBlock(stack)) {
-            it to stack
-        } else {
-            null
+            if (isValidBlock(stack)) {
+                add(IntObjectPair.of(i, stack))
+            }
         }
     }
 
@@ -535,8 +544,8 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
 
         val (slot, _) = placeableSlots
             .filter { (_, stack) -> stack.count > doNotUseBelowCount }
-            .maxWithOrNull { o1, o2 -> BLOCK_COMPARATOR_FOR_HOTBAR.compare(o1.second, o2.second) }
-            ?: placeableSlots.maxWithOrNull { o1, o2 -> BLOCK_COMPARATOR_FOR_HOTBAR.compare(o1.second, o2.second) }
+            .maxWithOrNull { o1, o2 -> BLOCK_COMPARATOR_FOR_HOTBAR.compare(o1.value(), o2.value()) }
+            ?: placeableSlots.maxWithOrNull { o1, o2 -> BLOCK_COMPARATOR_FOR_HOTBAR.compare(o1.value(), o2.value()) }
             ?: return null
 
         return slot
@@ -560,8 +569,12 @@ object ModuleScaffold : Module("Scaffold", Category.WORLD) {
     }
 
     internal fun getTargetedPosition(blockPos: BlockPos): BlockPos {
-        if (ScaffoldDownFeature.handleEvents() && ScaffoldDownFeature.shouldGoDown) {
+        if (ScaffoldDownFeature.running && ScaffoldDownFeature.shouldGoDown) {
             return blockPos.add(0, -2, 0)
+        }
+
+        if (ScaffoldCeilingFeature.canConstructCeiling() && ScaffoldCeilingFeature.enabled) {
+            return blockPos.add(0, 3, 0)
         }
 
         if (!isTowering) {

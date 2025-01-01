@@ -27,7 +27,8 @@ import net.ccbluex.liquidbounce.render.engine.Vec3
 import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
 import net.ccbluex.liquidbounce.render.engine.font.FontRendererBuffers
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gl.ShaderProgram
+import net.minecraft.client.gl.ShaderProgramKey
+import net.minecraft.client.gl.ShaderProgramKeys
 import net.minecraft.client.render.*
 import net.minecraft.client.render.VertexFormat.DrawMode
 import net.minecraft.client.util.math.MatrixStack
@@ -43,6 +44,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 val FULL_BOX = Box(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+val EMPTY_BOX = Box(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 /**
  * Data class representing the rendering environment.
@@ -55,12 +57,21 @@ sealed class RenderEnvironment(val matrixStack: MatrixStack) {
 
     abstract fun relativeToCamera(pos: Vec3d): Vec3d
 
+    inline fun withMatrixStack(block: MatrixStack.() -> Unit) = with(matrixStack) {
+        push()
+        try {
+            block()
+        } finally {
+            pop()
+        }
+    }
+
     inline fun FontRenderer.withBuffers(block: FontRenderer.(FontRendererBuffers) -> Unit) {
         val fontBuffers = FontRendererBuffers()
         try {
             block(fontBuffers) // don't forget to `commit`!
         } finally {
-            fontBuffers.draw(this)
+            fontBuffers.draw()
         }
     }
 
@@ -109,7 +120,7 @@ inline fun renderEnvironmentForWorld(matrixStack: MatrixStack, draw: WorldRender
 }
 
 inline fun renderEnvironmentForGUI(matrixStack: MatrixStack = MatrixStack(), draw: GUIRenderEnvironment.() -> Unit) {
-    RenderSystem.setShader { GameRenderer.getPositionTexColorProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR)
     RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f)
     RenderSystem.enableBlend()
 
@@ -193,7 +204,7 @@ inline fun RenderEnvironment.withDisabledCull(draw: RenderEnvironment.() -> Unit
  */
 
 fun RenderEnvironment.drawLines(vararg lines: Vec3) {
-    drawLines(*lines, mode = DrawMode.DEBUG_LINES)
+    drawLines(lines, mode = DrawMode.DEBUG_LINES)
 }
 
 /**
@@ -202,11 +213,11 @@ fun RenderEnvironment.drawLines(vararg lines: Vec3) {
  * @param positions The vectors representing the line strip.
  */
 fun RenderEnvironment.drawLineStrip(vararg positions: Vec3) {
-    drawLines(*positions, mode = DrawMode.DEBUG_LINE_STRIP)
+    drawLines(positions, mode = DrawMode.DEBUG_LINE_STRIP)
 }
-@Suppress("SpreadOperator")
+
 fun RenderEnvironment.drawLineStrip(positions: List<Vec3>) {
-    drawLines(*positions.toTypedArray(), mode = DrawMode.DEBUG_LINE_STRIP)
+    drawLines(positions.toTypedArray(), mode = DrawMode.DEBUG_LINE_STRIP)
 }
 
 /**
@@ -215,7 +226,7 @@ fun RenderEnvironment.drawLineStrip(positions: List<Vec3>) {
  * @param lines The vectors representing the lines.
  * @param mode The draw mode for the lines.
  */
-private fun RenderEnvironment.drawLines(vararg lines: Vec3, mode: DrawMode = DrawMode.DEBUG_LINES) {
+private fun RenderEnvironment.drawLines(lines: Array<out Vec3>, mode: DrawMode = DrawMode.DEBUG_LINES) {
     // If the array of lines is empty, we don't need to draw anything
     if (lines.isEmpty()) {
         return
@@ -226,7 +237,7 @@ private fun RenderEnvironment.drawLines(vararg lines: Vec3, mode: DrawMode = Dra
     // Begin drawing lines with position format
     val buffer = tessellator.begin(mode, VertexFormats.POSITION)
     // Set the shader to the position program
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     // Draw the vertices of the box
     with(buffer) {
@@ -246,7 +257,7 @@ fun RenderEnvironment.drawTextureQuad(pos1: Vec3d, pos2: Vec3d) {
     val tessellator = RenderSystem.renderThreadTesselator()
     // Begin drawing lines with position format
     val buffer = tessellator.begin(DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR)
-    RenderSystem.setShader { GameRenderer.getPositionTexColorProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR)
 
     val matrix = matrixStack.peek().positionMatrix
 
@@ -277,13 +288,13 @@ fun RenderEnvironment.drawTextureQuad(pos1: Vec3d, pos2: Vec3d) {
 inline fun RenderEnvironment.drawCustomMesh(
     drawMode: DrawMode,
     vertexFormat: VertexFormat,
-    shader: ShaderProgram,
+    shader: ShaderProgramKey,
     drawer: BufferBuilder.(Matrix4f) -> Unit
 ) {
     val tessellator = RenderSystem.renderThreadTesselator()
     val buffer = tessellator.begin(drawMode, vertexFormat)
 
-    RenderSystem.setShader { shader }
+    RenderSystem.setShader(shader)
 
     val matrix = matrixStack.peek().positionMatrix
 
@@ -298,41 +309,69 @@ inline fun RenderEnvironment.drawCustomMesh(
     }
 }
 
-fun RenderEnvironment.drawQuad(pos1: Vec3d, pos2: Vec3d) {
+fun RenderEnvironment.drawQuad(pos1: Vec3, pos2: Vec3) {
     val tessellator = RenderSystem.renderThreadTesselator()
     // Begin drawing lines with position format
     val buffer = tessellator.begin(DrawMode.QUADS, VertexFormats.POSITION)
 
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     val matrix = matrixStack.peek().positionMatrix
 
     // Draw the vertices of the box
     with(buffer) {
-        vertex(matrix, pos1.x.toFloat(), pos2.y.toFloat(), pos1.z.toFloat())
-        vertex(matrix, pos2.x.toFloat(), pos2.y.toFloat(), pos2.z.toFloat())
-        vertex(matrix, pos2.x.toFloat(), pos1.y.toFloat(), pos2.z.toFloat())
-        vertex(matrix, pos1.x.toFloat(), pos1.y.toFloat(), pos1.z.toFloat())
+        vertex(matrix, pos1.x, pos2.y, pos1.z)
+        vertex(matrix, pos2.x, pos2.y, pos2.z)
+        vertex(matrix, pos2.x, pos1.y, pos2.z)
+        vertex(matrix, pos1.x, pos1.y, pos1.z)
 
         // Draw the outlined box
         BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
     }
 }
 
-fun RenderEnvironment.drawTriangle(p1: Vec3d, p2: Vec3d, p3: Vec3d) {
+fun RenderEnvironment.drawQuadOutlines(pos1: Vec3, pos2: Vec3) {
+    val tessellator = RenderSystem.renderThreadTesselator()
+    // Begin drawing lines with position format
+    val buffer = tessellator.begin(DrawMode.DEBUG_LINES, VertexFormats.POSITION)
+
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
+
+    val matrix = matrixStack.peek().positionMatrix
+
+    // Draw the vertices of the box
+    with(buffer) {
+
+        vertex(matrix, pos1.x, pos1.y, pos1.z)
+        vertex(matrix, pos1.x, pos2.y, pos1.z)
+
+        vertex(matrix, pos1.x, pos2.y, pos1.z)
+        vertex(matrix, pos2.x, pos2.y, pos1.z)
+
+        vertex(matrix, pos2.x, pos1.y, pos1.z)
+        vertex(matrix, pos2.x, pos2.y, pos1.z)
+
+        vertex(matrix, pos1.x, pos1.y, pos1.z)
+        vertex(matrix, pos2.x, pos1.y, pos1.z)
+
+        BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
+    }
+}
+
+fun RenderEnvironment.drawTriangle(p1: Vec3, p2: Vec3, p3: Vec3) {
     val tessellator = RenderSystem.renderThreadTesselator()
     // Begin drawing lines with position format
     val bufferBuilder = tessellator.begin(DrawMode.TRIANGLES, VertexFormats.POSITION)
 
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     val matrix = matrixStack.peek().positionMatrix
 
     // Draw the vertices of the box
     with(bufferBuilder) {
-        vertex(matrix, p1.x.toFloat(), p1.y.toFloat(), p1.z.toFloat())
-        vertex(matrix, p2.x.toFloat(), p2.y.toFloat(), p2.z.toFloat())
-        vertex(matrix, p3.x.toFloat(), p3.y.toFloat(), p3.z.toFloat())
+        vertex(matrix, p1.x, p1.y, p1.z)
+        vertex(matrix, p2.x, p2.y, p2.z)
+        vertex(matrix, p3.x, p3.y, p3.z)
 
         // Draw the outlined box
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end())
@@ -340,9 +379,9 @@ fun RenderEnvironment.drawTriangle(p1: Vec3d, p2: Vec3d, p3: Vec3d) {
 }
 
 fun BufferBuilder.coloredTriangle(matrix: Matrix4f, p1: Vec3d, p2: Vec3d, p3: Vec3d, color4b: Color4b) {
-    vertex(matrix, p1.x.toFloat(), p1.y.toFloat(), p1.z.toFloat()).color(color4b.toRGBA())
-    vertex(matrix, p2.x.toFloat(), p2.y.toFloat(), p2.z.toFloat()).color(color4b.toRGBA())
-    vertex(matrix, p3.x.toFloat(), p3.y.toFloat(), p3.z.toFloat()).color(color4b.toRGBA())
+    vertex(matrix, p1.x.toFloat(), p1.y.toFloat(), p1.z.toFloat()).color(color4b.toARGB())
+    vertex(matrix, p2.x.toFloat(), p2.y.toFloat(), p2.z.toFloat()).color(color4b.toARGB())
+    vertex(matrix, p3.x.toFloat(), p3.y.toFloat(), p3.z.toFloat()).color(color4b.toARGB())
 }
 
 /**
@@ -363,49 +402,12 @@ fun RenderEnvironment.drawSideBox(box: Box, side: Direction, onlyOutline: Boolea
     )
 
     // Set the shader to the position program
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     // Draw the vertices of the box
     with(buffer) {
         // Draw the vertices of the box
-        val vertices = when (side) {
-            Direction.DOWN -> listOf(
-                Vec3(box.minX, box.minY, box.maxZ),
-                Vec3(box.minX, box.minY, box.minZ),
-                Vec3(box.maxX, box.minY, box.minZ),
-                Vec3(box.maxX, box.minY, box.maxZ)
-            )
-            Direction.UP -> listOf(
-                Vec3(box.minX, box.maxY, box.minZ),
-                Vec3(box.minX, box.maxY, box.maxZ),
-                Vec3(box.maxX, box.maxY, box.maxZ),
-                Vec3(box.maxX, box.maxY, box.minZ)
-            )
-            Direction.NORTH -> listOf(
-                Vec3(box.maxX, box.maxY, box.minZ),
-                Vec3(box.maxX, box.minY, box.minZ),
-                Vec3(box.minX, box.minY, box.minZ),
-                Vec3(box.minX, box.maxY, box.minZ)
-            )
-            Direction.SOUTH -> listOf(
-                Vec3(box.minX, box.maxY, box.maxZ),
-                Vec3(box.minX, box.minY, box.maxZ),
-                Vec3(box.maxX, box.minY, box.maxZ),
-                Vec3(box.maxX, box.maxY, box.maxZ)
-            )
-            Direction.WEST -> listOf(
-                Vec3(box.minX, box.maxY, box.minZ),
-                Vec3(box.minX, box.minY, box.minZ),
-                Vec3(box.minX, box.minY, box.maxZ),
-                Vec3(box.minX, box.maxY, box.maxZ)
-            )
-            Direction.EAST -> listOf(
-                Vec3(box.maxX, box.maxY, box.maxZ),
-                Vec3(box.maxX, box.minY, box.maxZ),
-                Vec3(box.maxX, box.minY, box.minZ),
-                Vec3(box.maxX, box.maxY, box.minZ)
-            )
-        }
+        val vertices = getVerticesForSide(box, side)
 
         vertices.forEach { (x, y, z) ->
             vertex(matrix, x, y, z)
@@ -418,6 +420,94 @@ fun RenderEnvironment.drawSideBox(box: Box, side: Direction, onlyOutline: Boolea
         // Draw the outlined box
         BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
     }
+}
+
+fun RenderEnvironment.drawBoxSide(box: Box, side: Direction, face: Color4b, outline: Color4b){
+    val matrix = matrixStack.peek().positionMatrix
+    val tessellator = RenderSystem.renderThreadTesselator()
+
+    // Set the shader to the position program
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
+
+    val vertices = getVerticesForSide(box, side)
+
+    var buffer = tessellator.begin(
+        DrawMode.QUADS,
+        VertexFormats.POSITION_COLOR
+    )
+
+    // Draw the vertices of the box
+    with(buffer) {
+        vertices.forEach { (x, y, z) ->
+            vertex(matrix, x, y, z).color(face.r, face.g, face.b, face.a)
+        }
+
+        // Draw the outlined box
+        BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
+    }
+
+    if (outline.a == 0) {
+        return
+    }
+
+    buffer = tessellator.begin(
+        DrawMode.DEBUG_LINE_STRIP,
+        VertexFormats.POSITION_COLOR
+    )
+
+    // Draw the vertices of the box
+    with(buffer) {
+        vertices.forEach { (x, y, z) ->
+            vertex(matrix, x, y, z).color(outline.r, outline.g, outline.b, outline.a)
+        }
+
+        // Draw the outlined box
+        BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
+    }
+}
+
+private fun getVerticesForSide(box: Box, side: Direction) = when (side) {
+    Direction.DOWN -> arrayOf(
+        Vec3(box.minX, box.minY, box.maxZ),
+        Vec3(box.minX, box.minY, box.minZ),
+        Vec3(box.maxX, box.minY, box.minZ),
+        Vec3(box.maxX, box.minY, box.maxZ)
+    )
+
+    Direction.UP -> arrayOf(
+        Vec3(box.minX, box.maxY, box.minZ),
+        Vec3(box.minX, box.maxY, box.maxZ),
+        Vec3(box.maxX, box.maxY, box.maxZ),
+        Vec3(box.maxX, box.maxY, box.minZ)
+    )
+
+    Direction.NORTH -> arrayOf(
+        Vec3(box.maxX, box.maxY, box.minZ),
+        Vec3(box.maxX, box.minY, box.minZ),
+        Vec3(box.minX, box.minY, box.minZ),
+        Vec3(box.minX, box.maxY, box.minZ)
+    )
+
+    Direction.SOUTH -> arrayOf(
+        Vec3(box.minX, box.maxY, box.maxZ),
+        Vec3(box.minX, box.minY, box.maxZ),
+        Vec3(box.maxX, box.minY, box.maxZ),
+        Vec3(box.maxX, box.maxY, box.maxZ)
+    )
+
+    Direction.WEST -> arrayOf(
+        Vec3(box.minX, box.maxY, box.minZ),
+        Vec3(box.minX, box.minY, box.minZ),
+        Vec3(box.minX, box.minY, box.maxZ),
+        Vec3(box.minX, box.maxY, box.maxZ)
+    )
+
+    Direction.EAST -> arrayOf(
+        Vec3(box.maxX, box.maxY, box.maxZ),
+        Vec3(box.maxX, box.minY, box.maxZ),
+        Vec3(box.maxX, box.minY, box.minZ),
+        Vec3(box.maxX, box.maxY, box.minZ)
+    )
 }
 
 /**
@@ -434,12 +524,12 @@ fun RenderEnvironment.drawGradientQuad(vertices: List<Vec3>, colors: List<Color4
     val buffer = tessellator.begin(DrawMode.QUADS, VertexFormats.POSITION_COLOR)
 
     // Set the shader to the position program
-    RenderSystem.setShader { GameRenderer.getPositionColorProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
 
     with(buffer) {
         vertices.forEachIndexed { index, (x, y, z) ->
             val color4b = colors[index]
-            vertex(matrix, x, y, z).color(color4b.toRGBA())
+            vertex(matrix, x, y, z).color(color4b.toARGB())
         }
 
         // Draw the quad
@@ -477,7 +567,7 @@ fun RenderEnvironment.drawGradientCircle(
     val buffer = tessellator.begin(DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR)
 
     // Set the shader to the position and color program
-    RenderSystem.setShader { GameRenderer.getPositionColorProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
 
     with(buffer) {
         for (p in circlePoints) {
@@ -485,9 +575,9 @@ fun RenderEnvironment.drawGradientCircle(
             val innerP = p * innerRadius + innerOffset
 
             vertex(matrix, outerP.x, outerP.y, outerP.z)
-                .color(outerColor4b.toRGBA())
+                .color(outerColor4b.toARGB())
             vertex(matrix, innerP.x, innerP.y, innerP.z)
-                .color(innerColor4b.toRGBA())
+                .color(innerColor4b.toARGB())
         }
 
         BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
@@ -498,7 +588,7 @@ fun RenderEnvironment.drawGradientCircle(
  * Function to draw the outline of a circle of the size [radius]
  *
  * @param radius The radius
- * @param color The color
+ * @param color4b The color
  */
 fun RenderEnvironment.drawCircleOutline(radius: Float, color4b: Color4b) {
     val matrix = matrixStack.peek().positionMatrix
@@ -506,14 +596,14 @@ fun RenderEnvironment.drawCircleOutline(radius: Float, color4b: Color4b) {
     val buffer = tessellator.begin(DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR)
 
     // Set the shader to the position and color program
-    RenderSystem.setShader { GameRenderer.getPositionColorProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
 
     with(buffer) {
         for (p in circlePoints) {
             val point = p * radius
 
             vertex(matrix, point.x, point.y, point.z)
-                .color(color4b.toRGBA())
+                .color(color4b.toARGB())
         }
 
         BufferRenderer.drawWithGlobalProgram(buffer.endNullable() ?: return)
@@ -532,7 +622,7 @@ fun RenderEnvironment.drawOutlinedBox(box: Box) {
     val buffer = tessellator.begin(DrawMode.DEBUG_LINES, VertexFormats.POSITION)
 
     // Set the shader to the position program
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     // Draw the vertices of the box
     with(buffer) {
@@ -585,7 +675,7 @@ fun RenderEnvironment.drawSolidBox(box: Box) {
     val buffer = tessellator.begin(DrawMode.QUADS, VertexFormats.POSITION)
 
     // Set the shader to the position program
-    RenderSystem.setShader { GameRenderer.getPositionProgram() }
+    RenderSystem.setShader(ShaderProgramKeys.POSITION)
 
     // Begin drawing quads with position format
 

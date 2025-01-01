@@ -26,29 +26,29 @@ import net.ccbluex.liquidbounce.api.oauth.OAuthClient
 import net.ccbluex.liquidbounce.api.oauth.OAuthClient.startAuth
 import net.ccbluex.liquidbounce.config.AutoConfig
 import net.ccbluex.liquidbounce.config.ConfigSystem
+import net.ccbluex.liquidbounce.features.command.CommandFactory
 import net.ccbluex.liquidbounce.features.command.CommandManager
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder.Companion.BOOLEAN_VALIDATOR
-import net.ccbluex.liquidbounce.features.cosmetic.CosmeticCategory
 import net.ccbluex.liquidbounce.features.cosmetic.CosmeticService
 import net.ccbluex.liquidbounce.features.misc.HideAppearance
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.destructClient
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.wipeClient
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
+import net.ccbluex.liquidbounce.integration.BrowserScreen
+import net.ccbluex.liquidbounce.integration.IntegrationListener
+import net.ccbluex.liquidbounce.integration.IntegrationListener.clientJcef
+import net.ccbluex.liquidbounce.integration.VirtualScreenType
+import net.ccbluex.liquidbounce.integration.theme.ThemeManager
+import net.ccbluex.liquidbounce.integration.theme.component.ComponentOverlay
+import net.ccbluex.liquidbounce.integration.theme.component.components
+import net.ccbluex.liquidbounce.integration.theme.component.customComponents
+import net.ccbluex.liquidbounce.integration.theme.component.types.ImageComponent
+import net.ccbluex.liquidbounce.integration.theme.component.types.TextComponent
 import net.ccbluex.liquidbounce.lang.LanguageManager
 import net.ccbluex.liquidbounce.utils.client.*
-import net.ccbluex.liquidbounce.web.integration.BrowserScreen
-import net.ccbluex.liquidbounce.web.integration.IntegrationHandler
-import net.ccbluex.liquidbounce.web.integration.IntegrationHandler.clientJcef
-import net.ccbluex.liquidbounce.web.integration.VirtualScreenType
-import net.ccbluex.liquidbounce.web.theme.ThemeManager
-import net.ccbluex.liquidbounce.web.theme.component.ComponentOverlay
-import net.ccbluex.liquidbounce.web.theme.component.components
-import net.ccbluex.liquidbounce.web.theme.component.customComponents
-import net.ccbluex.liquidbounce.web.theme.component.types.ImageComponent
-import net.ccbluex.liquidbounce.web.theme.component.types.TextComponent
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.HoverEvent
 import net.minecraft.util.Util
@@ -58,12 +58,12 @@ import net.minecraft.util.Util
  *
  * Provides subcommands for client management.
  */
-object CommandClient {
+object CommandClient : CommandFactory {
 
     /**
      * Creates client command with a variety of subcommands.
      */
-    fun createCommand() = CommandBuilder.begin("client")
+    override fun createCommand() = CommandBuilder.begin("client")
         .hub()
         .subcommand(infoCommand())
         .subcommand(browserCommand())
@@ -82,12 +82,18 @@ object CommandClient {
     private fun infoCommand() = CommandBuilder
         .begin("info")
         .handler { command, _ ->
-            chat(regular(command.result("clientName", variable(LiquidBounce.CLIENT_NAME))),
-                prefix = false)
-            chat(regular(command.result("clientVersion", variable(LiquidBounce.clientVersion))),
-                prefix = false)
-            chat(regular(command.result("clientAuthor", variable(LiquidBounce.CLIENT_AUTHOR))),
-                prefix = false)
+            chat(
+                regular(command.result("clientName", variable(LiquidBounce.CLIENT_NAME))),
+                metadata = MessageMetadata(prefix = false)
+            )
+            chat(
+                regular(command.result("clientVersion", variable(LiquidBounce.clientVersion))),
+                metadata = MessageMetadata(prefix = false)
+            )
+            chat(
+                regular(command.result("clientAuthor", variable(LiquidBounce.CLIENT_AUTHOR))),
+                metadata = MessageMetadata(prefix = false)
+            )
         }.build()
 
     private fun browserCommand() = CommandBuilder.begin("browser")
@@ -127,10 +133,12 @@ object CommandClient {
                                     )
                                 )
                         }),
-                    prefix = false
+                    metadata = MessageMetadata(
+                        prefix = false
+                    )
                 )
 
-                chat(prefix = false)
+                chat(metadata = MessageMetadata(prefix = false))
                 chat(regular("Integration Menu:"))
                 for (screenType in VirtualScreenType.entries) {
                     val url = runCatching {
@@ -162,7 +170,9 @@ object CommandClient {
                                     )
                             })
                             .append(regular(")")),
-                        prefix = false
+                        metadata = MessageMetadata(
+                            prefix = false
+                        )
                     )
                 }
 
@@ -182,7 +192,7 @@ object CommandClient {
         ).subcommand(CommandBuilder.begin("reset")
             .handler { command, args ->
                 chat(regular("Resetting client JCEF browser..."))
-                IntegrationHandler.updateIntegrationBrowser()
+                IntegrationListener.updateIntegrationBrowser()
             }.build()
         )
         .build()
@@ -200,6 +210,9 @@ object CommandClient {
         .subcommand(CommandBuilder.begin("set")
             .parameter(
                 ParameterBuilder.begin<String>("language")
+                    .autocompletedWith { begin ->
+                        LanguageManager.knownLanguages.filter { it.startsWith(begin, true) }
+                    }
                     .verifiedBy(ParameterBuilder.STRING_VALIDATOR).required()
                     .build()
             ).handler { command, args ->
@@ -504,12 +517,12 @@ object CommandClient {
     private fun resetCommand() = CommandBuilder
         .begin("reset")
         .handler { command, _ ->
-            AutoConfig.loadingNow = true
-            ModuleManager
-                // TODO: Remove when HUD no longer contains the Element Configuration
-                .filter { module -> module !is ModuleHud  }
-                .forEach { it.restore() }
-            AutoConfig.loadingNow = false
+            AutoConfig.withLoading {
+                ModuleManager
+                    // TODO: Remove when HUD no longer contains the Element Configuration
+                    .filter { module -> module !is ModuleHud  }
+                    .forEach { it.restore() }
+            }
             chat(regular(command.result("successfullyReset")))
         }
         .build()
@@ -519,7 +532,7 @@ object CommandClient {
         .hub()
         .subcommand(
             CommandBuilder.begin("refresh")
-                .handler { command, _ ->
+                .handler { _, _ ->
                     chat(regular("Refreshing cosmetics..."))
                     CosmeticService.carriersCosmetics.clear()
                     ClientAccountManager.clientAccount.cosmetics = null

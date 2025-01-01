@@ -18,10 +18,12 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.combat.velocity.mode
 
-import net.ccbluex.liquidbounce.config.Choice
-import net.ccbluex.liquidbounce.config.ChoiceConfigurable
-import net.ccbluex.liquidbounce.event.*
-import net.ccbluex.liquidbounce.event.events.*
+import net.ccbluex.liquidbounce.config.types.Choice
+import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
+import net.ccbluex.liquidbounce.event.events.PacketEvent
+import net.ccbluex.liquidbounce.event.events.PlayerMoveEvent
+import net.ccbluex.liquidbounce.event.handler
+import net.ccbluex.liquidbounce.event.sequenceHandler
 import net.ccbluex.liquidbounce.features.module.modules.combat.velocity.ModuleVelocity.modes
 import net.ccbluex.liquidbounce.utils.entity.directionYaw
 import net.ccbluex.liquidbounce.utils.entity.sqrtSpeed
@@ -32,10 +34,7 @@ import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket
 /**
  * Strafe velocity
  */
-internal object VelocityStrafe : Choice("Strafe") {
-
-    override val parent: ChoiceConfigurable<Choice>
-        get() = modes
+internal object VelocityStrafe : VelocityMode("Strafe") {
 
     private val delay by int("Delay", 2, 0..10, "ticks")
     private val strength by float("Strength", 1f, 0.1f..2f)

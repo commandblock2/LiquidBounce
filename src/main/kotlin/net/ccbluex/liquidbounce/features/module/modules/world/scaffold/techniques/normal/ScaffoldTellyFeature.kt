@@ -18,9 +18,11 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.normal
 
-import net.ccbluex.liquidbounce.config.ToggleableConfigurable
+import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.events.MovementInputEvent
+import net.ccbluex.liquidbounce.event.events.PlayerAfterJumpEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldNormalTechnique
@@ -41,9 +43,14 @@ object ScaffoldTellyFeature : ToggleableConfigurable(ScaffoldNormalTechnique, "T
     val doNotAim: Boolean
         get() = offGroundTicks < straightTicks && ticksUntilJump >= jumpTicks
 
+    // New val to determine if the player is telly bridging
+    val isTellyBridging: Boolean
+        get() = ticksUntilJump >= jumpTicks && player.moving
+
     private var offGroundTicks = 0
     private var ticksUntilJump = 0
 
+    val resetMode by enumChoice("ResetMode", Mode.RESET)
     private val straightTicks by int("Straight", 0, 0..5, "ticks")
     private val jumpTicksOpt by intRange("Jump", 0..0, 0..10, "ticks")
     private var jumpTicks = jumpTicksOpt.random()
@@ -59,16 +66,28 @@ object ScaffoldTellyFeature : ToggleableConfigurable(ScaffoldNormalTechnique, "T
     }
 
     @Suppress("unused")
-    private val movementInputHandler = handler<MovementInputEvent> {
+    private val movementInputHandler = handler<MovementInputEvent> { event ->
         if (!player.moving || ModuleScaffold.blockCount <= 0 || !player.isOnGround) {
             return@handler
         }
 
         val isStraight = RotationManager.currentRotation == null || straightTicks == 0
-        if (isStraight && ticksUntilJump >= jumpTicks) {
-            it.jumping = true
-            jumpTicks = jumpTicksOpt.random()
+
+        when (resetMode) {
+            Mode.REVERSE -> event.jump = true
+            Mode.RESET -> if (isStraight && ticksUntilJump >= jumpTicks) event.jump = true
         }
+    }
+
+    @Suppress("unused")
+    private val afterJumpHandler = handler<PlayerAfterJumpEvent> {
+        ticksUntilJump = 0
+        jumpTicks = jumpTicksOpt.random()
+    }
+
+    enum class Mode(override val choiceName: String) : NamedChoice {
+        REVERSE("Reverse"),
+        RESET("Reset")
     }
 
 }

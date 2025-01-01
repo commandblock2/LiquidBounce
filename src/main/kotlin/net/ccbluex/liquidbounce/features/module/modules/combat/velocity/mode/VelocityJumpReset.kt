@@ -18,21 +18,18 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.combat.velocity.mode
 
-import net.ccbluex.liquidbounce.config.Choice
-import net.ccbluex.liquidbounce.config.ChoiceConfigurable
-import net.ccbluex.liquidbounce.config.ToggleableConfigurable
-import net.ccbluex.liquidbounce.event.*
-import net.ccbluex.liquidbounce.event.events.*
+import net.ccbluex.liquidbounce.config.types.Choice
+import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
+import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
+import net.ccbluex.liquidbounce.event.events.MovementInputEvent
+import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.modules.combat.velocity.ModuleVelocity
 import net.ccbluex.liquidbounce.features.module.modules.combat.velocity.ModuleVelocity.modes
 
 /**
  * Jump Reset mode. A technique most players use to minimize the amount of knockback they get.
  */
-internal object VelocityJumpReset : Choice("JumpReset") {
-
-    override val parent: ChoiceConfigurable<Choice>
-        get() = modes
+internal object VelocityJumpReset : VelocityMode("JumpReset") {
 
     object JumpByReceivedHits : ToggleableConfigurable(ModuleVelocity, "JumpByReceivedHits", false) {
         val hitsUntilJump by int("HitsUntilJump", 2, 0..10)
@@ -57,7 +54,7 @@ internal object VelocityJumpReset : Choice("JumpReset") {
             return@handler
         }
 
-        it.jumping = true
+        it.jump = true
         limitUntilJump = 0
     }
 

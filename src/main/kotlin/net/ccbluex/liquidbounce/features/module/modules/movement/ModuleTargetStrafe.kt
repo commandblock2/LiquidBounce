@@ -1,12 +1,12 @@
 package net.ccbluex.liquidbounce.features.module.modules.movement
 
-import net.ccbluex.liquidbounce.config.Choice
-import net.ccbluex.liquidbounce.config.ChoiceConfigurable
-import net.ccbluex.liquidbounce.config.ToggleableConfigurable
+import net.ccbluex.liquidbounce.config.types.Choice
+import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
+import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.events.PlayerMoveEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 import net.ccbluex.liquidbounce.features.module.modules.movement.speed.ModuleSpeed
 import net.ccbluex.liquidbounce.features.module.modules.movement.speed.modes.watchdog.SpeedHypixelLowHop
@@ -26,10 +26,10 @@ import kotlin.math.*
  *
  * TODO: Implement visuals
  */
-object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
+object ModuleTargetStrafe : ClientModule("TargetStrafe", Category.MOVEMENT) {
 
     // Configuration options
-    private val modes = choices<Choice>("Mode", MotionMode, arrayOf(MotionMode))
+    private val modes = choices<Choice>("Mode", MotionMode, arrayOf(MotionMode)).apply { tagBy(this) }
     private val range by float("Range", 2f, 0.0f..8.0f)
     private val followRange by float("FollowRange", 4f, 0.0f..10.0f).onChange {
         it.coerceAtLeast(range)
@@ -42,6 +42,7 @@ object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
             get() = modes
 
         private val controlDirection by boolean("ControlDirection", true)
+        private val requiresSpeed by boolean("RequiresSpeed", false)
         private val hypixel by boolean("Hypixel", false)
 
         init {
@@ -80,8 +81,11 @@ object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
                     return false
                 }
 
-                if (VoidCheck.enabled && player.wouldFallIntoVoid(point,
-                        safetyExpand = VoidCheck.safetyExpand.toDouble())) {
+                if (VoidCheck.enabled && player.wouldFallIntoVoid(
+                        point,
+                        safetyExpand = VoidCheck.safetyExpand.toDouble()
+                    )
+                ) {
                     return false
                 }
 
@@ -127,6 +131,11 @@ object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
                 return@handler
             }
 
+            // If speed isn't enabled and requiresSpeed is, we exit early
+            if (requiresSpeed && !ModuleSpeed.running) {
+                return@handler
+            }
+
             // Get the target entity, requires a locked target from KillAura
             val target = ModuleKillAura.targetTracker.lockedOnTarget ?: return@handler
             val distance = sqrt((player.pos.x - target.pos.x).pow(2.0) + (player.pos.z - target.pos.z).pow(2.0))
@@ -141,10 +150,10 @@ object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
             }
 
             // Determine the direction to strafe
-            if (!(player.input.pressingLeft && player.input.pressingRight) && controlDirection) {
+            if (!(player.input.playerInput.left && player.input.playerInput.right) && controlDirection) {
                 when {
-                    player.input.pressingLeft -> direction = -1
-                    player.input.pressingRight -> direction = 1
+                    player.input.playerInput.left -> direction = -1
+                    player.input.playerInput.right -> direction = 1
                 }
             }
 
@@ -173,7 +182,7 @@ object ModuleTargetStrafe : Module("TargetStrafe", Category.MOVEMENT) {
             }
 
             // Perform the strafing movement
-            if (hypixel && ModuleSpeed.enabled) {
+            if (hypixel && ModuleSpeed.running) {
                 val minSpeed = if (player.isOnGround) {
                     0.48
                 } else {
