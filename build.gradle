@@ -316,6 +316,11 @@ tasks.withType(Test).configureEach {
     dependsOn(tasks.named("genSources"))
 }
 
+tasks.named('compileJava') {
+    dependsOn(':genSourcesWithVineflower')
+}
+
+
 detekt {
     config.setFrom(file("${rootProject.projectDir}/config/detekt/detekt.yml"))
     buildUponDefaultConfig = true
