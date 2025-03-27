@@ -313,11 +313,6 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.withType(Test).configureEach {
     useJUnitPlatform()
-    dependsOn(tasks.named("genSources"))
-}
-
-tasks.named('compileJava') {
-    dependsOn(':genSourcesWithVineflower')
 }
 
 
