@@ -193,6 +193,7 @@ dependencies {
     includeDependency "org.ahocorasick:ahocorasick:0.6.3"
 
     // Test libraries
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
     testImplementation "org.junit.jupiter:junit-jupiter:5.12.0"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 
